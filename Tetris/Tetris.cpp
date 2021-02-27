@@ -53,6 +53,7 @@ typedef enum playerAction {
     IDLE, // TODO: Have an IDLE action right now if the player is not doing anything this 'game-tick'. Stupid? Change this? 
     MOVE_LEFT,
     MOVE_RIGHT,
+    MOVE_DOWN,
     ROTATE_RIGHT,
     ROTATE_LEFT,
     FORCE_DOWN,
@@ -64,6 +65,8 @@ void update(bool *, PlayerAction);
 void draw();
 void teardown();
 
+void drawPiece(Tetranimo* piece);
+
 
 //TODO Right now I'm using a global ActivePiece and passing it to
 //functions by pointer. This might need to change later or maybe just
@@ -71,7 +74,10 @@ void teardown();
 static Tetranimo ActivePiece;
 void spawnPiece(Tetranimo* piece);
 void movePieceLeft(Tetranimo* piece);
+void movePieceRight(Tetranimo* piece);
 void rotateRight(Tetranimo* piece);
+void rotateLeft(Tetranimo* piece);
+void movePieceDown(Tetranimo* piece);
 
 int main() {
 
@@ -95,6 +101,7 @@ int main() {
 
     
     PlayerAction playerAction = IDLE;
+
     while (!game_over) {
         //NOTE AFAIK C's Standard Libraries input is all buffered so I
         // couldn't figure out a way to break the game loop in real
@@ -105,8 +112,15 @@ int main() {
             playerAction = QUIT;
         if (int input = GetAsyncKeyState(VK_LEFT) & (1 << 15) != 0)
             playerAction = MOVE_LEFT;
+        if (int input = GetAsyncKeyState(VK_RIGHT) & (1 << 15) != 0)
+            playerAction = MOVE_RIGHT;
+        if (int input = GetAsyncKeyState(VK_DOWN) & (1 << 15) != 0)
+            playerAction = MOVE_DOWN;
         if (int input = GetAsyncKeyState(VK_UP) & (1 << 15) != 0)
             playerAction = ROTATE_RIGHT;
+        if (int input = GetAsyncKeyState(Z_KEY) & (1 << 15) != 0)
+            playerAction = ROTATE_LEFT;
+
         
         
         ftime(&end);
@@ -156,10 +170,23 @@ void update(bool *game_over, PlayerAction playerAction) {
         movePieceLeft(&ActivePiece);
         break;
     }
+    case MOVE_RIGHT: {
+        movePieceRight(&ActivePiece);
+        break;
+    }
+    case MOVE_DOWN: {
+        movePieceDown(&ActivePiece);
+        break;
+    }
     case ROTATE_RIGHT: {
         rotateRight(&ActivePiece);
         break;
     }
+    case ROTATE_LEFT: {
+        rotateLeft(&ActivePiece);
+        break;
+    }
+    
     }
 
 }
@@ -192,15 +219,7 @@ void spawnPiece(Tetranimo* piece)
     piece->yPos = 0;
 
 
-    for (i = piece->yPos; i < 4; i++)
-    {
-        for (j = 0; j < 4; j++)
-        {
-            if (piece->shape[i][j] == 1)
-                board[i][piece->xPos + j] = '#';
-        }
-
-    }
+    drawPiece(piece);
 }
 
 /* movePieceLeft: moves a piece to the left*/
@@ -214,28 +233,82 @@ void movePieceLeft(Tetranimo* piece)
 
     int i, j;
     piece->xPos--;
-    for (i = piece->yPos; i < 4; i++)
-    {
-        for (j = 0; j < 4; j++)
-        {
-            if (piece->shape[i][j] == 1)
-                board[i][piece->xPos + j] = '#';
-        }
+    drawPiece(piece);
 
-    }
+    printf("piece moved %d times\n", test);
+    test++;
+}
+
+void movePieceRight(Tetranimo* piece)
+{
+    //TODO remove later, for debugging
+    static int test = 1;
+
+    //NOTE initialize to wipe the board essentially
+    initialize();
+
+    int i, j;
+    piece->xPos++;
+    drawPiece(piece);
+
+    printf("piece moved %d times\n", test);
+    test++;
+}
+
+void movePieceDown(Tetranimo* piece)
+{
+    //TODO remove later, for debugging
+    static int test = 1;
+
+    //NOTE initialize to wipe the board essentially
+    initialize();
+
+    int i, j;
+    piece->yPos++;
+    drawPiece(piece);
+
     printf("piece moved %d times\n", test);
     test++;
 }
 
 
+
+
 void rotateRight(Tetranimo* piece) {
     //TODO: Right now I'm just rotating the internal shape of the tetranimo.
 
-    //To rotate 90 degrees clockwise (to the right). First take the transpose of the array and then reflect about the center by swaping elements in the rows.
+    //To rotate 90 degrees clockwise (to the right). First take the transpose of the array and then reflect about the center by swaping elements in the ROWS.
     transposeOfTetranimoShapeMatrix(piece->shape);
     for (int i = 0; i < TETROMINO_WIDTH; i++) {
         for (int j = 0; j < TETROMINO_HEIGHT / 2; j++) {
             swap(piece->shape, i, j, i, TETROMINO_HEIGHT - j - 1);
         }
+    }
+    drawPiece(piece);
+}
+
+void rotateLeft(Tetranimo* piece) {
+    //TODO: Right now I'm just rotating the internal shape of the tetranimo.
+
+    //To rotate 90 degrees counter-clockwise (to the left). First take the transpose of the array and then reflect about the center by swaping elements in the COLUMNS.
+    transposeOfTetranimoShapeMatrix(piece->shape);
+    for (int i = 0; i < TETROMINO_HEIGHT; i++) {
+        for (int j = 0; j < TETROMINO_WIDTH / 2; j++) {
+            swap(piece->shape, j, i, TETROMINO_WIDTH - j - 1, i);
+        }
+    }
+    drawPiece(piece);
+}
+
+void drawPiece(Tetranimo* piece) {
+    initialize();
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (piece->shape[i][j] == 1)
+                board[piece->yPos + i][piece->xPos + j] = '#';
+        }
+
     }
 }
