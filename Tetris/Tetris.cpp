@@ -8,19 +8,13 @@
 
 #define bool char
 
-void initialize();
-void update();
-void teardown();
 
-
-const int FRAME_RATE = 1000;
+const int FRAME_RATE = 1000 / 2;
 const int BOARD_WIDTH = 12;
 const int BOARD_HEIGHT = 21;
 char board[BOARD_HEIGHT][BOARD_WIDTH];
 
 int score = 0;
-
-bool game_over = false;
 
 
 typedef struct
@@ -55,6 +49,23 @@ Tetranimo L =
     },
 };
 
+/* NOTE: Representing Player actions with an enum for now, 
+ * may need to change to something more complicated in the future if this sucks
+ */
+typedef enum playerAction {
+    IDLE, // TODO: Have an IDLE action right now if the player is not doing anything this 'game-tick'. Stupid? Change this? 
+    MOVE_LEFT,
+    MOVE_RIGHT,
+    ROTATE,
+    FORCE_DOWN,
+    QUIT
+} PlayerAction;
+
+void initialize();
+void update(bool *, PlayerAction);
+void draw();
+void teardown();
+
 
 //TODO Right now I'm using a global ActivePiece and passing it to
 //functions by pointer. This might need to change later or maybe just
@@ -73,6 +84,8 @@ int main() {
         - FALL INSANTLY WITH SPACE
     */
 
+    bool game_over = false;
+
     struct timeb start, end;
     ftime(&start);
     int time_diff;
@@ -85,26 +98,30 @@ int main() {
     spawnPiece(&L);
     ActivePiece = L;
 
-
+    
+    PlayerAction playerAction = IDLE;
     while (!game_over) {
-
-        ftime(&end);
-        time_diff = (int)1000 * (end.time - start.time) + (end.millitm - start.millitm);
-        if (time_diff > FRAME_RATE) {
-
-            update();
-            ftime(&start);
-        }
-
         //NOTE AFAIK C's Standard Libraries input is all buffered so I
         // couldn't figure out a way to break the game loop in real
         // time. This looks evil because GetAsyncKeyState returns a
         // short whose most significant integer is set, hence the
         // bit-shifting to check if that's the case.
         if (int input = GetAsyncKeyState(VK_ESCAPE) & (1 << 15) != 0)
-            game_over = true;
+            playerAction = QUIT;
         if (int input = GetAsyncKeyState(VK_LEFT) & (1 << 15) != 0)
-            movePieceLeft(&ActivePiece);
+            playerAction = MOVE_LEFT;
+        
+        
+        ftime(&end);
+        time_diff = (int)1000 * (end.time - start.time) + (end.millitm - start.millitm);
+        if (time_diff > FRAME_RATE) {
+            update(&game_over, playerAction);
+            draw();
+            ftime(&start);
+            playerAction = IDLE;
+        }
+
+  
 
 
     }
@@ -115,6 +132,8 @@ int main() {
 }
 
 void initialize() {
+    system("cls");
+
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
             if (j == 0 || j == BOARD_WIDTH - 1) {
@@ -130,7 +149,21 @@ void initialize() {
     }
 }
 
-void update() {
+void update(bool *game_over, PlayerAction playerAction) {
+    switch (playerAction) {
+    case QUIT: {
+        *game_over = true;
+        break;
+        }
+    case MOVE_LEFT: {
+        movePieceLeft(&ActivePiece);
+        break;
+    }
+    }
+
+}
+
+void draw() {
     system("cls");
     printf("SCORE:%d\n\n", score);
     for (int i = 0; i < BOARD_HEIGHT; i++) {
@@ -140,10 +173,11 @@ void update() {
         printf("\n");
     }
 
-
 }
 
 void teardown() {
+    system("cls");
+    printf("GAME_OVER!");
 
 }
 
