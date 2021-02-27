@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/timeb.h>
+#include "TetrisUtils.h"
 
 //NOTE I switched to using system("cls") instead of the escape
 // sequences but this is Windows only
@@ -8,10 +9,6 @@
 
 #define bool char
 
-
-const int FRAME_RATE = 1000 / 2;
-const int BOARD_WIDTH = 12;
-const int BOARD_HEIGHT = 21;
 char board[BOARD_HEIGHT][BOARD_WIDTH];
 
 int score = 0;
@@ -21,7 +18,7 @@ typedef struct
 {
     int xPos;
     int yPos;
-    int shape[4][4];
+    int shape[TETROMINO_WIDTH][TETROMINO_HEIGHT];
 } Tetranimo;
 
 //TODO "Empty Space above the square causes it to spawn in one line
@@ -56,7 +53,8 @@ typedef enum playerAction {
     IDLE, // TODO: Have an IDLE action right now if the player is not doing anything this 'game-tick'. Stupid? Change this? 
     MOVE_LEFT,
     MOVE_RIGHT,
-    ROTATE,
+    ROTATE_RIGHT,
+    ROTATE_LEFT,
     FORCE_DOWN,
     QUIT
 } PlayerAction;
@@ -73,16 +71,11 @@ void teardown();
 static Tetranimo ActivePiece;
 void spawnPiece(Tetranimo* piece);
 void movePieceLeft(Tetranimo* piece);
+void rotateRight(Tetranimo* piece);
 
 int main() {
-    /* STUFF WE NEED:
-        - 10 X 20 BOARD (DONE)
-        - TETROMINOS
-        - SCORE
-        - TETRICALES FALL AT SPEED
-        - ROTATE WITH ARROW KEYS
-        - FALL INSANTLY WITH SPACE
-    */
+
+   
 
     bool game_over = false;
 
@@ -98,6 +91,8 @@ int main() {
     spawnPiece(&L);
     ActivePiece = L;
 
+
+
     
     PlayerAction playerAction = IDLE;
     while (!game_over) {
@@ -110,6 +105,8 @@ int main() {
             playerAction = QUIT;
         if (int input = GetAsyncKeyState(VK_LEFT) & (1 << 15) != 0)
             playerAction = MOVE_LEFT;
+        if (int input = GetAsyncKeyState(VK_UP) & (1 << 15) != 0)
+            playerAction = ROTATE_RIGHT;
         
         
         ftime(&end);
@@ -157,6 +154,10 @@ void update(bool *game_over, PlayerAction playerAction) {
         }
     case MOVE_LEFT: {
         movePieceLeft(&ActivePiece);
+        break;
+    }
+    case ROTATE_RIGHT: {
+        rotateRight(&ActivePiece);
         break;
     }
     }
@@ -224,4 +225,17 @@ void movePieceLeft(Tetranimo* piece)
     }
     printf("piece moved %d times\n", test);
     test++;
+}
+
+
+void rotateRight(Tetranimo* piece) {
+    //TODO: Right now I'm just rotating the internal shape of the tetranimo.
+
+    //To rotate 90 degrees clockwise (to the right). First take the transpose of the array and then reflect about the center by swaping elements in the rows.
+    transposeOfTetranimoShapeMatrix(piece->shape);
+    for (int i = 0; i < TETROMINO_WIDTH; i++) {
+        for (int j = 0; j < TETROMINO_HEIGHT / 2; j++) {
+            swap(piece->shape, i, j, i, TETROMINO_HEIGHT - j - 1);
+        }
+    }
 }
