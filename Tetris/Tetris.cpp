@@ -42,11 +42,11 @@ Tetranimo L =
         {0, 1, 1, 0},
         {0, 0, 1, 0},
         {0, 0, 1, 0},
-        {0, 0, 1, 0},
+        {0, 0, 0, 0},
     },
 };
 
-/* NOTE: Representing Player actions with an enum for now, 
+/* NOTE: Representing Player actions with an enum for now,
  * may need to change to something more complicated in the future if this sucks
  */
 typedef enum playerAction {
@@ -61,12 +61,12 @@ typedef enum playerAction {
 } PlayerAction;
 
 void initialize();
-void update(bool *, PlayerAction);
+void update(bool*, PlayerAction);
 void draw();
 void teardown();
 
 void drawPiece(Tetranimo* piece);
-
+void erasePiece(Tetranimo* piece);
 
 //TODO Right now I'm using a global ActivePiece and passing it to
 //functions by pointer. This might need to change later or maybe just
@@ -81,7 +81,7 @@ void movePieceDown(Tetranimo* piece);
 
 int main() {
 
-   
+
 
     bool game_over = false;
 
@@ -99,7 +99,7 @@ int main() {
 
 
 
-    
+
     PlayerAction playerAction = IDLE;
 
     while (!game_over) {
@@ -121,8 +121,8 @@ int main() {
         if (int input = GetAsyncKeyState(Z_KEY) & (1 << 15) != 0)
             playerAction = ROTATE_LEFT;
 
-        
-        
+
+
         ftime(&end);
         time_diff = (int)1000 * (end.time - start.time) + (end.millitm - start.millitm);
         if (time_diff > FRAME_RATE) {
@@ -132,7 +132,7 @@ int main() {
             playerAction = IDLE;
         }
 
-  
+
 
 
     }
@@ -160,12 +160,12 @@ void initialize() {
     }
 }
 
-void update(bool *game_over, PlayerAction playerAction) {
+void update(bool* game_over, PlayerAction playerAction) {
     switch (playerAction) {
     case QUIT: {
         *game_over = true;
         break;
-        }
+    }
     case MOVE_LEFT: {
         movePieceLeft(&ActivePiece);
         break;
@@ -186,7 +186,7 @@ void update(bool *game_over, PlayerAction playerAction) {
         rotateLeft(&ActivePiece);
         break;
     }
-    
+
     }
 
 }
@@ -200,6 +200,8 @@ void draw() {
         }
         printf("\n");
     }
+    //NOTE FOR DEBUGGING
+    printf("Active Piece xPos: %d Actvie Piece yPos: %d", ActivePiece.xPos, ActivePiece.yPos);
 
 }
 
@@ -225,50 +227,23 @@ void spawnPiece(Tetranimo* piece)
 /* movePieceLeft: moves a piece to the left*/
 void movePieceLeft(Tetranimo* piece)
 {
-    //TODO remove later, for debugging
-    static int test = 1;
-
-    //NOTE initialize to wipe the board essentially
-    initialize();
-
-    int i, j;
+    erasePiece(piece);
     piece->xPos--;
     drawPiece(piece);
-
-    printf("piece moved %d times\n", test);
-    test++;
 }
 
 void movePieceRight(Tetranimo* piece)
 {
-    //TODO remove later, for debugging
-    static int test = 1;
-
-    //NOTE initialize to wipe the board essentially
-    initialize();
-
-    int i, j;
+    erasePiece(piece);
     piece->xPos++;
     drawPiece(piece);
-
-    printf("piece moved %d times\n", test);
-    test++;
 }
 
 void movePieceDown(Tetranimo* piece)
 {
-    //TODO remove later, for debugging
-    static int test = 1;
-
-    //NOTE initialize to wipe the board essentially
-    initialize();
-
-    int i, j;
+    erasePiece(piece);
     piece->yPos++;
     drawPiece(piece);
-
-    printf("piece moved %d times\n", test);
-    test++;
 }
 
 
@@ -276,6 +251,7 @@ void movePieceDown(Tetranimo* piece)
 
 void rotateRight(Tetranimo* piece) {
     //TODO: Right now I'm just rotating the internal shape of the tetranimo.
+    erasePiece(piece);
 
     //To rotate 90 degrees clockwise (to the right). First take the transpose of the array and then reflect about the center by swaping elements in the ROWS.
     transposeOfTetranimoShapeMatrix(piece->shape);
@@ -289,6 +265,7 @@ void rotateRight(Tetranimo* piece) {
 
 void rotateLeft(Tetranimo* piece) {
     //TODO: Right now I'm just rotating the internal shape of the tetranimo.
+    erasePiece(piece);
 
     //To rotate 90 degrees counter-clockwise (to the left). First take the transpose of the array and then reflect about the center by swaping elements in the COLUMNS.
     transposeOfTetranimoShapeMatrix(piece->shape);
@@ -301,14 +278,71 @@ void rotateLeft(Tetranimo* piece) {
 }
 
 void drawPiece(Tetranimo* piece) {
-    initialize();
+
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
         {
             if (piece->shape[i][j] == 1)
-                board[piece->yPos + i][piece->xPos + j] = '#';
+            {
+                //TODO: YUCK! We should probably do this checking
+                // somewhere outside of drawPiece?  The way this is
+                // done now causes a bug because there is no way of
+                // telling within drawPiece which way the player moved
+                // the piece. If we were to move this logic outside
+                // into the movePiece functions, we would not have i
+                // and j.
+                if (board[piece->yPos + i][piece->xPos + j] != '|' &&
+                    board[piece->yPos + i][piece->xPos + j] != '_')
+                {
+                    board[piece->yPos + i][piece->xPos + j] = '#';
+                }
+                //TODO: These else-ifs should be cleaned up. We need to know
+                //which direction the player moved the piece.
+                else if (piece->xPos > 5)
+                {
+                    piece->xPos--;
+                    drawPiece(piece);
+                }
+                else if (piece->xPos < 5)
+                {
+                    piece->xPos++;
+                    drawPiece(piece);
+                }
+                else if (piece->yPos > 5)
+                {
+                    erasePiece(piece);
+                    piece->yPos--;
+                    drawPiece(piece);
+                }
+                else if (piece->yPos < 5)
+                {
+                    erasePiece(piece);
+                    piece->yPos++;
+                    drawPiece(piece);
+                }
+                else
+                {
+                    //TODO Error
+                }
+
+            }
         }
 
     }
+}
+
+/* erasePiece: Erases a piece from the board */
+void erasePiece(Tetranimo* piece)
+{
+    for (int i = 0; i < TETROMINO_WIDTH; i++)
+    {
+        for (int j = 0; j < TETROMINO_HEIGHT; j++)
+        {
+            if (board[piece->yPos + i][piece->xPos + j] == '#')
+                board[piece->yPos + i][piece->xPos + j] = '.';
+
+        }
+    }
+
 }
