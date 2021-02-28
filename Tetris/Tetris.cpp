@@ -67,6 +67,7 @@ void teardown();
 
 void drawPiece(Tetranimo* piece);
 void erasePiece(Tetranimo* piece);
+bool checkCollision(Tetranimo* piece, int, int);
 
 //TODO Right now I'm using a global ActivePiece and passing it to
 //functions by pointer. This might need to change later or maybe just
@@ -200,8 +201,10 @@ void draw() {
         }
         printf("\n");
     }
+
     //NOTE FOR DEBUGGING
     printf("Active Piece xPos: %d Actvie Piece yPos: %d", ActivePiece.xPos, ActivePiece.yPos);
+
 
 }
 
@@ -285,50 +288,18 @@ void drawPiece(Tetranimo* piece) {
         {
             if (piece->shape[i][j] == 1)
             {
-                //TODO: YUCK! We should probably do this checking
-                // somewhere outside of drawPiece?  The way this is
-                // done now causes a bug because there is no way of
-                // telling within drawPiece which way the player moved
-                // the piece. If we were to move this logic outside
-                // into the movePiece functions, we would not have i
-                // and j.
-                if (board[piece->yPos + i][piece->xPos + j] != '|' &&
-                    board[piece->yPos + i][piece->xPos + j] != '_')
+                if (!(checkCollision(piece, (piece->yPos + i), (piece->xPos + j))))
                 {
                     board[piece->yPos + i][piece->xPos + j] = '#';
                 }
-                //TODO: These else-ifs should be cleaned up. We need to know
-                //which direction the player moved the piece.
-                else if (piece->xPos > 5)
-                {
-                    piece->xPos--;
-                    drawPiece(piece);
-                }
-                else if (piece->xPos < 5)
-                {
-                    piece->xPos++;
-                    drawPiece(piece);
-                }
-                else if (piece->yPos > 5)
-                {
-                    erasePiece(piece);
-                    piece->yPos--;
-                    drawPiece(piece);
-                }
-                else if (piece->yPos < 5)
-                {
-                    erasePiece(piece);
-                    piece->yPos++;
-                    drawPiece(piece);
-                }
                 else
                 {
-                    //TODO Error
+                    break;
                 }
 
             }
-        }
 
+        }
     }
 }
 
@@ -345,4 +316,49 @@ void erasePiece(Tetranimo* piece)
         }
     }
 
+}
+
+/* checkCollision: checks to see if the piece collided with the edges
+ * of the board, and returns true if that's the case. */
+ //TODO Check for collisions with other placed pieces.
+bool checkCollision(Tetranimo* piece, int y, int x)
+{
+    if (board[y][x] != '|' && board[y][x] != '_')
+    {
+        //There was no collision
+        return false;
+    }
+    else
+    {
+        if (x <= 0)
+        {
+            //COLLISION WITH THE LEFT SIDE OF THE BOARD
+            erasePiece(piece);
+            piece->xPos++;
+            drawPiece(piece);
+            return true;
+        }
+        if (x > BOARD_WIDTH - 2)
+        {
+            //COLLISION WITH THE RIGHT SIDE OF THE BOARD
+            erasePiece(piece);
+            piece->xPos--;
+            drawPiece(piece);
+            return true;
+        }
+        if (y > BOARD_HEIGHT - 2)
+        {
+            //COLLISION WITH THE BOTTOM OF THE BOARD
+            erasePiece(piece);
+            piece->yPos--;
+            drawPiece(piece);
+            return true;
+        }
+        else {
+
+            system("cls");
+            printf("error: checkCollision, invalid collision\n");
+            return true;
+        }
+    }
 }
