@@ -5,6 +5,8 @@ static const int BOARD_HEIGHT = 21;
 static const int TETROMINO_WIDTH = 4; //Maximum width of a tetromino.
 static const int TETROMINO_HEIGHT = 4; //Maximum height of a tetromino.
 static const short Z_KEY = 0x5A;
+static const int NUMBER_OF_SHAPES = 7;
+static const int TETRAMINO_STARTING_XPOS = 5;
 
 void swap(int[TETROMINO_WIDTH][TETROMINO_HEIGHT], int, int, int, int);
 

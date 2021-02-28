@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/timeb.h>
+#include <time.h>
 #include "TetrisUtils.h"
 
 //NOTE I switched to using system("cls") instead of the escape
@@ -8,6 +9,8 @@
 #include <windows.h> /* for GetAsyncKeyState */
 
 #define bool char
+
+typedef int shape[TETROMINO_WIDTH][TETROMINO_HEIGHT];
 
 char board[BOARD_HEIGHT][BOARD_WIDTH];
 
@@ -18,33 +21,57 @@ typedef struct
 {
     int xPos;
     int yPos;
-    int shape[TETROMINO_WIDTH][TETROMINO_HEIGHT];
+    shape shape;
 } Tetranimo;
 
-//TODO "Empty Space above the square causes it to spawn in one line
-//lower.
-Tetranimo Square =
-{
-    0,
-    0,
-    {
-        {0, 0, 0, 0},
-        {0, 1, 1, 0},
-        {0, 1, 1, 0},
-        {0, 0, 0, 0},
-    },
+const shape SHAPES[NUMBER_OF_SHAPES] = {
+    {0,1,1,0, //SQUARE
+     0,1,1,0,
+     0,0,0,0,
+     0,0,0,0},
+
+    {1,1,1,1, //LINE
+     0,0,0,0,
+     0,0,0,0,
+     0,0,0,0},
+
+    {0,1,1,1, //T
+     0,0,1,0,
+     0,0,0,0,
+     0,0,0,0},
+
+    {0,1,0,0, //L
+     0,1,0,0,
+     0,1,1,0,
+     0,0,0,0},
+
+    {0,1,0,0, //J
+     0,1,0,0,
+     0,1,1,0,
+     0,0,0,0},
+
+    {0,1,1,0, //S
+     1,1,0,0,
+     0,0,0,0,
+     0,0,0,0},
+
+    {0,1,1,0, //Z
+     0,0,1,1,
+     0,0,0,0,
+     0,0,0,0}
 };
-Tetranimo L =
-{
-    0,
-    0,
-    {
-        {0, 1, 1, 0},
-        {0, 0, 1, 0},
-        {0, 0, 1, 0},
-        {0, 0, 0, 0},
-    },
-};
+
+
+
+typedef enum tetranimoes {
+    SQUARE,
+    LINE,
+    T,
+    L,
+    J,
+    S,
+    Z,
+} Tetranimoes;
 
 /* NOTE: Representing Player actions with an enum for now,
  * may need to change to something more complicated in the future if this sucks
@@ -79,6 +106,7 @@ void movePieceRight(Tetranimo* piece);
 void rotateRight(Tetranimo* piece);
 void rotateLeft(Tetranimo* piece);
 void movePieceDown(Tetranimo* piece);
+Tetranimo spawnTetanimo();
 
 int main() {
 
@@ -95,8 +123,10 @@ int main() {
     initialize();
 
     //TODO hard-coded for the moment.
-    spawnPiece(&L);
-    ActivePiece = L;
+
+    
+    ActivePiece = spawnTetanimo();
+    spawnPiece(&ActivePiece);
 
 
 
@@ -132,8 +162,6 @@ int main() {
             ftime(&start);
             playerAction = IDLE;
         }
-
-
 
 
     }
@@ -361,4 +389,18 @@ bool checkCollision(Tetranimo* piece, int y, int x)
             return true;
         }
     }
+}
+
+Tetranimo spawnTetanimo() {
+    int shapeIndex;
+    srand((unsigned)time(NULL));
+    shapeIndex = rand() % 7;
+
+    Tetranimo* tetranimo = (Tetranimo*)malloc(sizeof(Tetranimo));
+    memcpy(tetranimo->shape, &SHAPES[shapeIndex], sizeof(SHAPES[shapeIndex]));
+    tetranimo->xPos = TETRAMINO_STARTING_XPOS;
+    tetranimo->yPos = 0;
+
+    return *tetranimo;
+
 }
