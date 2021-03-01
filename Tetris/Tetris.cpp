@@ -95,17 +95,19 @@ void teardown();
 void drawPiece(Tetranimo* piece);
 void erasePiece(Tetranimo* piece);
 bool checkCollision(Tetranimo* piece, int, int);
+void placePiece(Tetranimo* piece);
 
 //TODO Right now I'm using a global ActivePiece and passing it to
 //functions by pointer. This might need to change later or maybe just
 //permanently draw the piece onto the board once it becomes inactive.
-static Tetranimo ActivePiece;
+Tetranimo ActivePiece;
 void spawnPiece(Tetranimo* piece);
 void movePieceLeft(Tetranimo* piece);
 void movePieceRight(Tetranimo* piece);
 void rotateRight(Tetranimo* piece);
 void rotateLeft(Tetranimo* piece);
 void movePieceDown(Tetranimo* piece);
+void forceDown(Tetranimo* piece);
 Tetranimo spawnTetanimo();
 
 int main() {
@@ -124,7 +126,7 @@ int main() {
 
     //TODO hard-coded for the moment.
 
-    
+
     ActivePiece = spawnTetanimo();
     spawnPiece(&ActivePiece);
 
@@ -151,6 +153,8 @@ int main() {
             playerAction = ROTATE_RIGHT;
         if (int input = GetAsyncKeyState(Z_KEY) & (1 << 15) != 0)
             playerAction = ROTATE_LEFT;
+        if (int input = GetAsyncKeyState(VK_SPACE) & (1 << 15) != 0)
+            playerAction = FORCE_DOWN;
 
 
 
@@ -215,6 +219,10 @@ void update(bool* game_over, PlayerAction playerAction) {
         rotateLeft(&ActivePiece);
         break;
     }
+    case FORCE_DOWN: {
+        forceDown(&ActivePiece);
+        break;
+    }
 
     }
 
@@ -231,7 +239,7 @@ void draw() {
     }
 
     //NOTE FOR DEBUGGING
-    printf("Active Piece xPos: %d Actvie Piece yPos: %d", ActivePiece.xPos, ActivePiece.yPos);
+    printf("Active Piece xPos: %d Active Piece yPos: %d", ActivePiece.xPos, ActivePiece.yPos);
 
 
 }
@@ -245,12 +253,6 @@ void teardown() {
 /* spawnPiece: spawns a piece centered at the top of the board. It can be any shaped piece */
 void spawnPiece(Tetranimo* piece)
 {
-    int mid_x = (BOARD_WIDTH / 2) - 2;
-    int i, j;
-
-    piece->xPos = mid_x;
-    piece->yPos = 0;
-
 
     drawPiece(piece);
 }
@@ -308,11 +310,21 @@ void rotateLeft(Tetranimo* piece) {
     drawPiece(piece);
 }
 
+
+void forceDown(Tetranimo* piece)
+{
+    erasePiece(piece);
+    //piece->yPos = BOARD_HEIGHT - 2;
+    drawPiece(piece);
+    placePiece(piece);
+}
+
+
 void drawPiece(Tetranimo* piece) {
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < TETROMINO_WIDTH && piece->yPos + i < BOARD_HEIGHT; i++)
     {
-        for (int j = 0; j < 4; j++)
+        for (int j = 0; j < TETROMINO_HEIGHT && piece->xPos + j < BOARD_WIDTH; j++)
         {
             if (piece->shape[i][j] == 1)
             {
@@ -334,9 +346,9 @@ void drawPiece(Tetranimo* piece) {
 /* erasePiece: Erases a piece from the board */
 void erasePiece(Tetranimo* piece)
 {
-    for (int i = 0; i < TETROMINO_WIDTH; i++)
+    for (int i = 0; i < TETROMINO_WIDTH && piece->yPos + i < BOARD_HEIGHT; i++)
     {
-        for (int j = 0; j < TETROMINO_HEIGHT; j++)
+        for (int j = 0; j < TETROMINO_HEIGHT && piece->xPos + j < BOARD_WIDTH; j++)
         {
             if (board[piece->yPos + i][piece->xPos + j] == '#')
                 board[piece->yPos + i][piece->xPos + j] = '.';
@@ -396,6 +408,7 @@ Tetranimo spawnTetanimo() {
     srand((unsigned)time(NULL));
     shapeIndex = rand() % 7;
 
+
     Tetranimo* tetranimo = (Tetranimo*)malloc(sizeof(Tetranimo));
     memcpy(tetranimo->shape, &SHAPES[shapeIndex], sizeof(SHAPES[shapeIndex]));
     tetranimo->xPos = TETRAMINO_STARTING_XPOS;
@@ -403,4 +416,22 @@ Tetranimo spawnTetanimo() {
 
     return *tetranimo;
 
+}
+
+/* placePiece: places a piece onto the board */
+void placePiece(Tetranimo* piece)
+{
+    for (int i = 0; i < TETROMINO_WIDTH && piece->yPos + i < BOARD_HEIGHT; i++)
+    {
+        for (int j = 0; j < TETROMINO_HEIGHT && piece->xPos + j < BOARD_WIDTH; j++)
+        {
+            if (board[piece->yPos + i][piece->xPos + j] == '#')
+                board[piece->yPos + i][piece->xPos + j] = '*';
+
+        }
+    }
+
+    ActivePiece = spawnTetanimo();
+    spawnPiece(&ActivePiece);
+    free(piece);
 }
