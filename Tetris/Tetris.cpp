@@ -88,7 +88,7 @@ typedef enum playerAction {
 } PlayerAction;
 
 void initialize();
-void update(bool*, PlayerAction);
+void update(bool*, PlayerAction, Tetranimo*);
 void draw();
 void teardown();
 
@@ -100,7 +100,6 @@ void placePiece(Tetranimo* piece);
 //TODO Right now I'm using a global ActivePiece and passing it to
 //functions by pointer. This might need to change later or maybe just
 //permanently draw the piece onto the board once it becomes inactive.
-Tetranimo ActivePiece;
 void spawnPiece(Tetranimo* piece);
 void movePieceLeft(Tetranimo* piece);
 void movePieceRight(Tetranimo* piece);
@@ -109,6 +108,10 @@ void rotateLeft(Tetranimo* piece);
 void movePieceDown(Tetranimo* piece);
 void forceDown(Tetranimo* piece);
 Tetranimo spawnTetanimo();
+
+//Flag to tell whether current piece is still active and movable. When this is false, you know to spawn a new piece. This is garbage?
+bool piece_active = 1;
+
 
 int main() {
 
@@ -127,7 +130,7 @@ int main() {
     //TODO hard-coded for the moment.
 
 
-    ActivePiece = spawnTetanimo();
+    Tetranimo ActivePiece = spawnTetanimo();
     spawnPiece(&ActivePiece);
 
 
@@ -161,7 +164,12 @@ int main() {
         ftime(&end);
         time_diff = (int)1000 * (end.time - start.time) + (end.millitm - start.millitm);
         if (time_diff > FRAME_RATE) {
-            update(&game_over, playerAction);
+            if (!piece_active) {
+                ActivePiece = spawnTetanimo();
+                spawnPiece(&ActivePiece);
+                piece_active = 1;
+            }
+            update(&game_over, playerAction, &ActivePiece);
             draw();
             ftime(&start);
             playerAction = IDLE;
@@ -193,38 +201,40 @@ void initialize() {
     }
 }
 
-void update(bool* game_over, PlayerAction playerAction) {
+void update(bool* game_over, PlayerAction playerAction,Tetranimo* ActivePiece) {
     switch (playerAction) {
     case QUIT: {
         *game_over = true;
         break;
     }
     case MOVE_LEFT: {
-        movePieceLeft(&ActivePiece);
+        movePieceLeft(ActivePiece);
         break;
     }
     case MOVE_RIGHT: {
-        movePieceRight(&ActivePiece);
+        movePieceRight(ActivePiece);
         break;
     }
     case MOVE_DOWN: {
-        movePieceDown(&ActivePiece);
+        movePieceDown(ActivePiece);
         break;
     }
     case ROTATE_RIGHT: {
-        rotateRight(&ActivePiece);
+        rotateRight(ActivePiece);
         break;
     }
     case ROTATE_LEFT: {
-        rotateLeft(&ActivePiece);
+        rotateLeft(ActivePiece);
         break;
     }
     case FORCE_DOWN: {
-        forceDown(&ActivePiece);
+        forceDown(ActivePiece);
         break;
     }
-
     }
+    //Move a piece down once per game tick no matter what.
+    //TODO: make this happen at a faster rate the longer the game goes.
+    movePieceDown(ActivePiece);
 
 }
 
@@ -239,7 +249,7 @@ void draw() {
     }
 
     //NOTE FOR DEBUGGING
-    printf("Active Piece xPos: %d Active Piece yPos: %d", ActivePiece.xPos, ActivePiece.yPos);
+    //printf("Active Piece xPos: %d Active Piece yPos: %d", ActivePiece.xPos, ActivePiece.yPos);
 
 
 }
@@ -247,6 +257,7 @@ void draw() {
 void teardown() {
     system("cls");
     printf("GAME_OVER!");
+    //free(ActivePiece);
 
 }
 
@@ -313,10 +324,13 @@ void rotateLeft(Tetranimo* piece) {
 
 void forceDown(Tetranimo* piece)
 {
-    erasePiece(piece);
+    //erasePiece(piece);
     //piece->yPos = BOARD_HEIGHT - 2;
-    drawPiece(piece);
-    placePiece(piece);
+    //drawPiece(piece);
+    while (piece_active) {
+        movePieceDown(piece);
+    }
+    //placePiece(piece);
 }
 
 
@@ -392,6 +406,8 @@ bool checkCollision(Tetranimo* piece, int y, int x)
             erasePiece(piece);
             piece->yPos--;
             drawPiece(piece);
+            //If you are colliding with the bottom of the board, you ran out of time. Its over. The piece should be placed automatically for you.
+            placePiece(piece);
             return true;
         }
         else {
@@ -408,13 +424,12 @@ Tetranimo spawnTetanimo() {
     srand((unsigned)time(NULL));
     shapeIndex = rand() % 7;
 
+    Tetranimo tetranimo;
+    tetranimo.xPos = TETRAMINO_STARTING_XPOS;
+    tetranimo.yPos = 0;
+    memcpy(tetranimo.shape, &SHAPES[shapeIndex], sizeof(SHAPES[shapeIndex]));
 
-    Tetranimo* tetranimo = (Tetranimo*)malloc(sizeof(Tetranimo));
-    memcpy(tetranimo->shape, &SHAPES[shapeIndex], sizeof(SHAPES[shapeIndex]));
-    tetranimo->xPos = TETRAMINO_STARTING_XPOS;
-    tetranimo->yPos = 0;
-
-    return *tetranimo;
+    return tetranimo;
 
 }
 
@@ -430,8 +445,7 @@ void placePiece(Tetranimo* piece)
 
         }
     }
-
-    ActivePiece = spawnTetanimo();
-    spawnPiece(&ActivePiece);
-    free(piece);
+    //You placed the current piece so set the piece active flag off.
+    piece_active = 0;
+ 
 }
