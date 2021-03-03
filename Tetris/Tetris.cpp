@@ -96,6 +96,7 @@ void drawPiece(Tetranimo* piece);
 void erasePiece(Tetranimo* piece);
 bool checkCollision(Tetranimo* piece, int, int);
 void placePiece(Tetranimo* piece);
+void sweepBoard();
 
 //TODO Right now I'm using a global ActivePiece and passing it to
 //functions by pointer. This might need to change later or maybe just
@@ -168,6 +169,7 @@ int main() {
                 ActivePiece = spawnTetanimo();
                 spawnPiece(&ActivePiece);
                 piece_active = 1;
+                playerAction = IDLE;
             }
             update(&game_over, playerAction, &ActivePiece);
             draw();
@@ -201,7 +203,7 @@ void initialize() {
     }
 }
 
-void update(bool* game_over, PlayerAction playerAction,Tetranimo* ActivePiece) {
+void update(bool* game_over, PlayerAction playerAction, Tetranimo* ActivePiece) {
     switch (playerAction) {
     case QUIT: {
         *game_over = true;
@@ -209,32 +211,41 @@ void update(bool* game_over, PlayerAction playerAction,Tetranimo* ActivePiece) {
     }
     case MOVE_LEFT: {
         movePieceLeft(ActivePiece);
+        playerAction = IDLE;
         break;
     }
     case MOVE_RIGHT: {
         movePieceRight(ActivePiece);
+        playerAction = IDLE;
         break;
     }
     case MOVE_DOWN: {
         movePieceDown(ActivePiece);
+        playerAction = IDLE;
         break;
     }
     case ROTATE_RIGHT: {
         rotateRight(ActivePiece);
+        playerAction = IDLE;
         break;
     }
     case ROTATE_LEFT: {
         rotateLeft(ActivePiece);
+        playerAction = IDLE;
         break;
     }
     case FORCE_DOWN: {
         forceDown(ActivePiece);
+        playerAction = IDLE;
         break;
     }
     }
     //Move a piece down once per game tick no matter what.
     //TODO: make this happen at a faster rate the longer the game goes.
-    movePieceDown(ActivePiece);
+    if (piece_active)
+        movePieceDown(ActivePiece);
+
+    //TODO Should this be done outside of update? It checks the board every game tick
 
 }
 
@@ -248,17 +259,11 @@ void draw() {
         printf("\n");
     }
 
-    //NOTE FOR DEBUGGING
-    //printf("Active Piece xPos: %d Active Piece yPos: %d", ActivePiece.xPos, ActivePiece.yPos);
-
-
 }
 
 void teardown() {
     system("cls");
     printf("GAME_OVER!");
-    //free(ActivePiece);
-
 }
 
 /* spawnPiece: spawns a piece centered at the top of the board. It can be any shaped piece */
@@ -324,13 +329,9 @@ void rotateLeft(Tetranimo* piece) {
 
 void forceDown(Tetranimo* piece)
 {
-    //erasePiece(piece);
-    //piece->yPos = BOARD_HEIGHT - 2;
-    //drawPiece(piece);
     while (piece_active) {
         movePieceDown(piece);
     }
-    //placePiece(piece);
 }
 
 
@@ -344,11 +345,12 @@ void drawPiece(Tetranimo* piece) {
             {
                 if (!(checkCollision(piece, (piece->yPos + i), (piece->xPos + j))))
                 {
+
                     board[piece->yPos + i][piece->xPos + j] = '#';
                 }
                 else
                 {
-                    break;
+                    return;
                 }
 
             }
@@ -373,14 +375,22 @@ void erasePiece(Tetranimo* piece)
 }
 
 /* checkCollision: checks to see if the piece collided with the edges
- * of the board, and returns true if that's the case. */
- //TODO Check for collisions with other placed pieces.
+ * of the board or a placed piece. If true, it returns true and places the piece. */
 bool checkCollision(Tetranimo* piece, int y, int x)
 {
-    if (board[y][x] != '|' && board[y][x] != '_')
+    if (board[y][x] != '|' && board[y][x] != '_' && board[y][x] != '*')
     {
         //There was no collision
         return false;
+    }
+    else if (board[y][x] == '*')
+    {
+        erasePiece(piece);
+        piece->yPos--;
+        drawPiece(piece);
+        placePiece(piece);
+
+        return true;
     }
     else
     {
@@ -447,5 +457,57 @@ void placePiece(Tetranimo* piece)
     }
     //You placed the current piece so set the piece active flag off.
     piece_active = 0;
- 
+    sweepBoard();
+}
+
+/* scanCompleteRow: Scans the entire board, and if it finds a
+   completed row of '*'s it keeps track of it in an array of ints
+   pointed to by *rows */
+int* scanCompletedRow(void) {
+    static int rows[4];
+    int rowIndex = 0;
+    int i, j, k;
+
+    for (j = 0; j < BOARD_HEIGHT; j++)
+    {
+        for (i = 0, k = 0; i < BOARD_WIDTH; i++)
+        {
+            if (board[j][i] == '*')
+                k++;
+
+        }
+        if (k == BOARD_WIDTH - 2)
+            rows[rowIndex++] = j;
+    }
+
+    return rows;
+
+}
+
+/* breakCompleteRow: Turns a row on the board to '.'s */
+void breakCompletedRow(int row)
+{
+    int i;
+    for (i = 1; i < BOARD_WIDTH - 1; i++)
+        board[row][i] = '.';
+    // TODO: Idk how scoring works in Tetris so it goes up 1 per row for now.
+    score++;
+
+}
+
+/* sweepBoard: small little function that checks for completed rows
+   and calls breakCompletedRow on the appropriate row. Right now I
+   only intend to do this after a piece is placed. */
+void sweepBoard(void)
+{
+    int scancompletedRow();
+    void breakCompletedRow(int);
+
+    int* rowCheck;
+    int i;
+    for (i = 0, (rowCheck = scanCompletedRow()); i < 4 && *rowCheck > 0; i++, rowCheck++)
+    {
+        breakCompletedRow(*rowCheck);
+        *rowCheck = 0;
+    }
 }
