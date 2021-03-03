@@ -502,12 +502,51 @@ void sweepBoard(void)
 {
     int scancompletedRow();
     void breakCompletedRow(int);
+    void dropRows(int);
+    int topRowBroken = 0;
 
     int* rowCheck;
     int i;
     for (i = 0, (rowCheck = scanCompletedRow()); i < 4 && *rowCheck > 0; i++, rowCheck++)
     {
         breakCompletedRow(*rowCheck);
+        if (topRowBroken == 0)
+            topRowBroken = *rowCheck;
         *rowCheck = 0;
+    }
+
+    if (topRowBroken > 0)
+        dropRows(topRowBroken);
+}
+
+/* dropRows: drops remaining placed blocks down after completed rows
+ * are broken. Takes the top row broken as a parameter */
+void dropRows(int topRowBroken)
+{
+    int i, j, k;
+    // TODO: this might be doing more work than we need it to. If we
+    // made the check j > topRowBroken - 4 would that be enough?
+    for (j = topRowBroken - 1; j > topRowBroken - 5; j--)
+    {
+        for (i = 1; i < BOARD_WIDTH - 1; i++)
+        {
+            if (board[j][i] == '*')
+            {
+                //erase the current block
+                board[j][i] = '.';
+
+                //find the bottom place on the board that is not a * or _
+                for (k = 0; board[j + k][i] != '*' && board[j + k][i] != '_'; k++)
+                    ;
+                k--;
+
+                //re-draw the block at that location
+                board[j + k][i] = '*';
+
+
+            }
+
+
+        }
     }
 }
