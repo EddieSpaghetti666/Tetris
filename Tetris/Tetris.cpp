@@ -2,20 +2,10 @@
 #include <sys/timeb.h>
 #include <time.h>
 #include "TetrisUtils.h"
-
-//NOTE I switched to using system("cls") instead of the escape
-// sequences but this is Windows only
 #include <stdlib.h> /* for system("cls")*/
 #include <windows.h> /* for GetAsyncKeyState */
 
 #define bool char
-
-typedef int shape[TETROMINO_WIDTH][TETROMINO_HEIGHT];
-
-char board[BOARD_HEIGHT][BOARD_WIDTH];
-
-int score = 0;
-
 
 typedef struct
 {
@@ -23,45 +13,6 @@ typedef struct
     int yPos;
     shape shape;
 } Tetranimo;
-
-const shape SHAPES[NUMBER_OF_SHAPES] = {
-    {0,1,1,0, //SQUARE
-     0,1,1,0,
-     0,0,0,0,
-     0,0,0,0},
-
-    {1,1,1,1, //LINE
-     0,0,0,0,
-     0,0,0,0,
-     0,0,0,0},
-
-    {0,1,1,1, //T
-     0,0,1,0,
-     0,0,0,0,
-     0,0,0,0},
-
-    {0,1,0,0, //L
-     0,1,0,0,
-     0,1,1,0,
-     0,0,0,0},
-
-    {0,1,0,0, //J
-     0,1,0,0,
-     0,1,1,0,
-     0,0,0,0},
-
-    {0,1,1,0, //S
-     1,1,0,0,
-     0,0,0,0,
-     0,0,0,0},
-
-    {0,1,1,0, //Z
-     0,0,1,1,
-     0,0,0,0,
-     0,0,0,0}
-};
-
-
 
 typedef enum tetranimoes {
     SQUARE,
@@ -73,11 +24,8 @@ typedef enum tetranimoes {
     Z,
 } Tetranimoes;
 
-/* NOTE: Representing Player actions with an enum for now,
- * may need to change to something more complicated in the future if this sucks
- */
-typedef enum playerAction {
-    IDLE, // TODO: Have an IDLE action right now if the player is not doing anything this 'game-tick'. Stupid? Change this? 
+typedef enum class PlayerAction{
+    IDLE, 
     MOVE_LEFT,
     MOVE_RIGHT,
     MOVE_DOWN,
@@ -85,96 +33,89 @@ typedef enum playerAction {
     ROTATE_LEFT,
     FORCE_DOWN,
     QUIT
-} PlayerAction;
+};
 
-void initialize();
-void update(bool*, PlayerAction, Tetranimo*);
-void draw();
+typedef enum class PieceDirection{
+    LEFT,
+    RIGHT,
+    DOWN
+};
+
+typedef enum class GameState{
+    PLAYING,
+    PAUSED,
+    OVER
+};
+
+typedef struct {
+    GameState state; 
+    bool pieceIsActive;
+    int level;
+    char board[BOARD_HEIGHT][BOARD_WIDTH];
+    int score;
+    int totalLinesCleared;
+    int framesUntilNextDrop;
+    Tetranimo activePiece;
+} Game;
+
+Game initialize();
+void update(PlayerAction, Game*);
+void draw(Game*);
 void teardown();
-
-void drawPiece(Tetranimo* piece);
-void erasePiece(Tetranimo* piece);
-bool checkCollision(Tetranimo* piece, int, int);
-void placePiece(Tetranimo* piece);
-void sweepBoard();
-
-//TODO Right now I'm using a global ActivePiece and passing it to
-//functions by pointer. This might need to change later or maybe just
-//permanently draw the piece onto the board once it becomes inactive.
-void spawnPiece(Tetranimo* piece);
-void movePieceLeft(Tetranimo* piece);
-void movePieceRight(Tetranimo* piece);
-void rotateRight(Tetranimo* piece);
-void rotateLeft(Tetranimo* piece);
-void movePieceDown(Tetranimo* piece);
-void forceDown(Tetranimo* piece);
-Tetranimo spawnTetanimo();
-
-//Flag to tell whether current piece is still active and movable. When this is false, you know to spawn a new piece. This is garbage?
-bool piece_active = 1;
-
+void drawActivePiece(Game*);
+void eraseActivePiece(Game*);
+bool checkCollision(Game*, int, int);
+void placeActivePiece(Game*);
+void sweepBoard(Game*);
+void spawnActivePiece(Game*);
+void moveActivePiece(Game*, PieceDirection);
+void rotateActivePiece(Game*, bool);
+void forceActivePieceDown(Game*);
+void dropRows(Game*, int);
+Tetranimo spawnTetranimo();
 
 int main() {
 
+    struct timeb gameStart, gameCurrent, frameStart, frameEnd;
+    ftime(&frameStart);
+    int frameTimeDiff, timeSinceStart;
+
+    Game* game = &initialize();
+    PlayerAction playerAction = PlayerAction::IDLE;
 
 
-    bool game_over = false;
-
-    struct timeb start, end;
-    ftime(&start);
-    int time_diff;
-    ftime(&start);
-
-
-    initialize();
-
-    //TODO hard-coded for the moment.
-
-
-    Tetranimo ActivePiece = spawnTetanimo();
-    spawnPiece(&ActivePiece);
-
-
-
-
-    PlayerAction playerAction = IDLE;
-
-    while (!game_over) {
-        //NOTE AFAIK C's Standard Libraries input is all buffered so I
-        // couldn't figure out a way to break the game loop in real
-        // time. This looks evil because GetAsyncKeyState returns a
-        // short whose most significant integer is set, hence the
-        // bit-shifting to check if that's the case.
+    /* Game Loop */
+    while (game->state != GameState::OVER) {
+      
+        ftime(&frameEnd);
+        frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
+       
         if (int input = GetAsyncKeyState(VK_ESCAPE) & (1 << 15) != 0)
-            playerAction = QUIT;
-        if (int input = GetAsyncKeyState(VK_LEFT) & (1 << 15) != 0)
-            playerAction = MOVE_LEFT;
-        if (int input = GetAsyncKeyState(VK_RIGHT) & (1 << 15) != 0)
-            playerAction = MOVE_RIGHT;
-        if (int input = GetAsyncKeyState(VK_DOWN) & (1 << 15) != 0)
-            playerAction = MOVE_DOWN;
-        if (int input = GetAsyncKeyState(VK_UP) & (1 << 15) != 0)
-            playerAction = ROTATE_RIGHT;
-        if (int input = GetAsyncKeyState(Z_KEY) & (1 << 15) != 0)
-            playerAction = ROTATE_LEFT;
-        if (int input = GetAsyncKeyState(VK_SPACE) & (1 << 15) != 0)
-            playerAction = FORCE_DOWN;
+            playerAction = PlayerAction::QUIT;
+        else if (int input = GetAsyncKeyState(VK_LEFT) & (1 << 15) != 0)
+            playerAction = PlayerAction::MOVE_LEFT;
+        else if (int input = GetAsyncKeyState(VK_RIGHT) & (1 << 15) != 0)
+            playerAction = PlayerAction::MOVE_RIGHT;
+        else if (int input = GetAsyncKeyState(VK_DOWN) & (1 << 15) != 0)
+            playerAction = PlayerAction::MOVE_DOWN;
+        else if (int input = GetAsyncKeyState(VK_UP) & (1 << 15) != 0)
+            playerAction = PlayerAction::ROTATE_RIGHT;
+        else if (int input = GetAsyncKeyState(Z_KEY) & (1 << 15) != 0)
+            playerAction = PlayerAction::ROTATE_LEFT;
+        else if (int input = GetAsyncKeyState(VK_SPACE) & (1 << 15) != 0)
+            playerAction = PlayerAction::FORCE_DOWN;
 
-
-
-        ftime(&end);
-        time_diff = (int)1000 * (end.time - start.time) + (end.millitm - start.millitm);
-        if (time_diff > FRAME_RATE) {
-            if (!piece_active) {
-                ActivePiece = spawnTetanimo();
-                spawnPiece(&ActivePiece);
-                piece_active = 1;
-                playerAction = IDLE;
+        if (frameTimeDiff > FRAME_RATE) {
+            if (!game->pieceIsActive) {
+                game->activePiece = spawnTetranimo();
+                spawnActivePiece(game);
+                game->pieceIsActive = true;
+                playerAction = PlayerAction::IDLE;
             }
-            update(&game_over, playerAction, &ActivePiece);
-            draw();
-            ftime(&start);
-            playerAction = IDLE;
+            update(playerAction, game);
+            draw(game);
+            ftime(&frameStart);
+            playerAction = PlayerAction::IDLE;
         }
 
 
@@ -185,76 +126,78 @@ int main() {
 
 }
 
-void initialize() {
+Game initialize() {
     system("cls");
-
+    Game game;
+    game.level = 1;
+    game.score = 0;
+    game.totalLinesCleared = 0;
+    game.pieceIsActive = false;
+    game.state = GameState::PLAYING;
+    game.framesUntilNextDrop = INITIAL_GRAVITY;
+    //fill in the board.
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
             if (j == 0 || j == BOARD_WIDTH - 1) {
-                board[i][j] = '|';
+                game.board[i][j] = '|';
             }
             else if (i == BOARD_HEIGHT - 1) {
-                board[i][j] = '_';
+                game.board[i][j] = '_';
             }
             else {
-                board[i][j] = '.';
+                game.board[i][j] = '.';
             }
         }
     }
+    return game;
 }
 
-void update(bool* game_over, PlayerAction playerAction, Tetranimo* ActivePiece) {
+void update(PlayerAction playerAction, Game* game) {
     switch (playerAction) {
-    case QUIT: {
-        *game_over = true;
+    case PlayerAction::QUIT: {
+        game->state = GameState::OVER;
         break;
     }
-    case MOVE_LEFT: {
-        movePieceLeft(ActivePiece);
-        playerAction = IDLE;
+    case PlayerAction::MOVE_LEFT: {
+        moveActivePiece(game, PieceDirection::LEFT);
         break;
     }
-    case MOVE_RIGHT: {
-        movePieceRight(ActivePiece);
-        playerAction = IDLE;
+    case PlayerAction::MOVE_RIGHT: {
+        moveActivePiece(game, PieceDirection::RIGHT);
         break;
     }
-    case MOVE_DOWN: {
-        movePieceDown(ActivePiece);
-        playerAction = IDLE;
+    case PlayerAction::MOVE_DOWN: {
+        moveActivePiece(game, PieceDirection::DOWN);
         break;
     }
-    case ROTATE_RIGHT: {
-        rotateRight(ActivePiece);
-        playerAction = IDLE;
+    case PlayerAction::ROTATE_RIGHT: {
+        rotateActivePiece(game, true); //True, because you are rotating clockwise.
         break;
     }
-    case ROTATE_LEFT: {
-        rotateLeft(ActivePiece);
-        playerAction = IDLE;
+    case PlayerAction::ROTATE_LEFT: {
+        rotateActivePiece(game, false); //False, you are rotating anticlockwise
         break;
     }
-    case FORCE_DOWN: {
-        forceDown(ActivePiece);
-        playerAction = IDLE;
+    case PlayerAction::FORCE_DOWN: {
+        forceActivePieceDown(game);
         break;
     }
     }
-    //Move a piece down once per game tick no matter what.
-    //TODO: make this happen at a faster rate the longer the game goes.
-    if (piece_active)
-        movePieceDown(ActivePiece);
-
-    //TODO Should this be done outside of update? It checks the board every game tick
+    game->level = 1 + game->totalLinesCleared / 1;
+    if (game->framesUntilNextDrop == 0) {
+        moveActivePiece(game, PieceDirection::DOWN);
+        game->framesUntilNextDrop = INITIAL_GRAVITY - game->level;
+    }
+    game->framesUntilNextDrop--;
 
 }
 
-void draw() {
+void draw(Game* game) {
     system("cls");
-    printf("SCORE:%d\n\n", score);
+    printf("Lines:%d\nLevel:%d\n\nSCORE:%d\n\n", game->totalLinesCleared,game->level,game->score);
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
-            printf("%c", board[i][j]);
+            printf("%c", game->board[i][j]);
         }
         printf("\n");
     }
@@ -267,86 +210,73 @@ void teardown() {
 }
 
 /* spawnPiece: spawns a piece centered at the top of the board. It can be any shaped piece */
-void spawnPiece(Tetranimo* piece)
+void spawnActivePiece(Game* game)
 {
-
-    drawPiece(piece);
+    drawActivePiece(game);
 }
 
-/* movePieceLeft: moves a piece to the left*/
-void movePieceLeft(Tetranimo* piece)
+void moveActivePiece(Game* game, PieceDirection direction)
 {
-    erasePiece(piece);
-    piece->xPos--;
-    drawPiece(piece);
-}
-
-void movePieceRight(Tetranimo* piece)
-{
-    erasePiece(piece);
-    piece->xPos++;
-    drawPiece(piece);
-}
-
-void movePieceDown(Tetranimo* piece)
-{
-    erasePiece(piece);
-    piece->yPos++;
-    drawPiece(piece);
+    eraseActivePiece(game);
+    switch (direction) {
+    case PieceDirection::LEFT: {
+        game->activePiece.xPos--;
+        break;
+    }
+    case PieceDirection::RIGHT: {
+        game->activePiece.xPos++;
+        break;
+    }
+    case PieceDirection::DOWN: {
+        game->activePiece.yPos++;
+        break;
+    }
+    }
+    drawActivePiece(game);
 }
 
 
+void rotateActivePiece(Game* game, bool clockwise) {
+    eraseActivePiece(game);
 
+    transposeOfTetranimoShapeMatrix(game->activePiece.shape);
 
-void rotateRight(Tetranimo* piece) {
-    //TODO: Right now I'm just rotating the internal shape of the tetranimo.
-    erasePiece(piece);
-
-    //To rotate 90 degrees clockwise (to the right). First take the transpose of the array and then reflect about the center by swaping elements in the ROWS.
-    transposeOfTetranimoShapeMatrix(piece->shape);
     for (int i = 0; i < TETROMINO_WIDTH; i++) {
         for (int j = 0; j < TETROMINO_HEIGHT / 2; j++) {
-            swap(piece->shape, i, j, i, TETROMINO_HEIGHT - j - 1);
+            //The only thing that changes if you rotate clockwise vs anticlockwise is whether or not you swap elements in the rows or columns:
+            if (clockwise) {
+                swap(game->activePiece.shape, i, j, i, TETROMINO_HEIGHT - j - 1);
+            }
+            else {
+                //ANTICLOCKWISE ROTATION
+                swap(game->activePiece.shape, j, i, TETROMINO_WIDTH - j - 1, i);
+            }
         }
     }
-    drawPiece(piece);
+    drawActivePiece(game);
 }
 
-void rotateLeft(Tetranimo* piece) {
-    //TODO: Right now I'm just rotating the internal shape of the tetranimo.
-    erasePiece(piece);
-
-    //To rotate 90 degrees counter-clockwise (to the left). First take the transpose of the array and then reflect about the center by swaping elements in the COLUMNS.
-    transposeOfTetranimoShapeMatrix(piece->shape);
-    for (int i = 0; i < TETROMINO_HEIGHT; i++) {
-        for (int j = 0; j < TETROMINO_WIDTH / 2; j++) {
-            swap(piece->shape, j, i, TETROMINO_WIDTH - j - 1, i);
-        }
-    }
-    drawPiece(piece);
-}
-
-
-void forceDown(Tetranimo* piece)
+void forceActivePieceDown(Game* game)
 {
-    while (piece_active) {
-        movePieceDown(piece);
+    while (game->pieceIsActive) {
+
+        moveActivePiece(game, PieceDirection::DOWN);
     }
 }
 
 
-void drawPiece(Tetranimo* piece) {
+void drawActivePiece(Game* game) {
 
-    for (int i = 0; i < TETROMINO_WIDTH && piece->yPos + i < BOARD_HEIGHT; i++)
+    for (int i = 0; i < TETROMINO_WIDTH && game->activePiece.yPos + i < BOARD_HEIGHT; i++)
     {
-        for (int j = 0; j < TETROMINO_HEIGHT && piece->xPos + j < BOARD_WIDTH; j++)
+        for (int j = 0; j < TETROMINO_HEIGHT && game->activePiece.xPos + j < BOARD_WIDTH; j++)
         {
-            if (piece->shape[i][j] == 1)
+            if (game->activePiece.shape[i][j] == 1)
             {
-                if (!(checkCollision(piece, (piece->yPos + i), (piece->xPos + j))))
+                if (!(checkCollision(game, (game->activePiece.yPos + i), (game->activePiece.xPos + j))))
                 {
 
-                    board[piece->yPos + i][piece->xPos + j] = '#';
+                    game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] = '#';
                 }
                 else
                 {
@@ -360,14 +290,14 @@ void drawPiece(Tetranimo* piece) {
 }
 
 /* erasePiece: Erases a piece from the board */
-void erasePiece(Tetranimo* piece)
+void eraseActivePiece(Game* game)
 {
-    for (int i = 0; i < TETROMINO_WIDTH && piece->yPos + i < BOARD_HEIGHT; i++)
+    for (int i = 0; i < TETROMINO_WIDTH && game->activePiece.yPos + i < BOARD_HEIGHT; i++)
     {
-        for (int j = 0; j < TETROMINO_HEIGHT && piece->xPos + j < BOARD_WIDTH; j++)
+        for (int j = 0; j < TETROMINO_HEIGHT && game->activePiece.xPos + j < BOARD_WIDTH; j++)
         {
-            if (board[piece->yPos + i][piece->xPos + j] == '#')
-                board[piece->yPos + i][piece->xPos + j] = '.';
+            if (game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] == '#')
+                game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] = '.';
 
         }
     }
@@ -376,48 +306,48 @@ void erasePiece(Tetranimo* piece)
 
 /* checkCollision: checks to see if the piece collided with the edges
  * of the board or a placed piece. If true, it returns true and places the piece. */
-bool checkCollision(Tetranimo* piece, int y, int x)
+bool checkCollision(Game* game, int dest_row, int dest_col)
 {
-    if (board[y][x] != '|' && board[y][x] != '_' && board[y][x] != '*')
+    if (game->board[dest_row][dest_col] != '|' && game->board[dest_row][dest_col] != '_' && game->board[dest_row][dest_col] != '*')
     {
         //There was no collision
         return false;
     }
-    else if (board[y][x] == '*')
+    else if (game->board[dest_row][dest_col] == '*')
     {
-        erasePiece(piece);
-        piece->yPos--;
-        drawPiece(piece);
-        placePiece(piece);
+        eraseActivePiece(game);
+        game->activePiece.yPos--;
+        drawActivePiece(game);
+        placeActivePiece(game);
 
         return true;
     }
     else
     {
-        if (x <= 0)
+        if (dest_col <= 0)
         {
             //COLLISION WITH THE LEFT SIDE OF THE BOARD
-            erasePiece(piece);
-            piece->xPos++;
-            drawPiece(piece);
+            eraseActivePiece(game);
+            game->activePiece.xPos++;
+            drawActivePiece(game);
             return true;
         }
-        if (x > BOARD_WIDTH - 2)
+        if (dest_col > BOARD_WIDTH - 2)
         {
             //COLLISION WITH THE RIGHT SIDE OF THE BOARD
-            erasePiece(piece);
-            piece->xPos--;
-            drawPiece(piece);
+            eraseActivePiece(game);
+            game->activePiece.xPos--;
+            drawActivePiece(game);
             return true;
         }
-        if (y > BOARD_HEIGHT - 2)
+        if (dest_row > BOARD_HEIGHT - 2)
         {
             //COLLISION WITH THE BOTTOM OF THE BOARD
-            erasePiece(piece);
-            piece->yPos--;
-            drawPiece(piece);
+            eraseActivePiece(game);
+            game->activePiece.yPos--;
+            drawActivePiece(game);
             //If you are colliding with the bottom of the board, you ran out of time. Its over. The piece should be placed automatically for you.
-            placePiece(piece);
+            placeActivePiece(game);
             return true;
         }
         else {
@@ -429,7 +359,7 @@ bool checkCollision(Tetranimo* piece, int y, int x)
     }
 }
 
-Tetranimo spawnTetanimo() {
+Tetranimo spawnTetranimo() {
     int shapeIndex;
     srand((unsigned)time(NULL));
     shapeIndex = rand() % 7;
@@ -444,26 +374,26 @@ Tetranimo spawnTetanimo() {
 }
 
 /* placePiece: places a piece onto the board */
-void placePiece(Tetranimo* piece)
+void placeActivePiece(Game* game)
 {
-    for (int i = 0; i < TETROMINO_WIDTH && piece->yPos + i < BOARD_HEIGHT; i++)
+    for (int i = 0; i < TETROMINO_WIDTH && game->activePiece.yPos + i < BOARD_HEIGHT; i++)
     {
-        for (int j = 0; j < TETROMINO_HEIGHT && piece->xPos + j < BOARD_WIDTH; j++)
+        for (int j = 0; j < TETROMINO_HEIGHT && game->activePiece.xPos + j < BOARD_WIDTH; j++)
         {
-            if (board[piece->yPos + i][piece->xPos + j] == '#')
-                board[piece->yPos + i][piece->xPos + j] = '*';
+            if (game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] == '#')
+                game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] = '*';
 
         }
     }
     //You placed the current piece so set the piece active flag off.
-    piece_active = 0;
-    sweepBoard();
+    game->pieceIsActive = false;
+    sweepBoard(game);
 }
 
 /* scanCompleteRow: Scans the entire board, and if it finds a
    completed row of '*'s it keeps track of it in an array of ints
    pointed to by *rows */
-int* scanCompletedRow(void) {
+int* scanCompletedRow(Game* game) {
     static int rows[4];
     int rowIndex = 0;
     int i, j, k;
@@ -472,7 +402,7 @@ int* scanCompletedRow(void) {
     {
         for (i = 0, k = 0; i < BOARD_WIDTH; i++)
         {
-            if (board[j][i] == '*')
+            if (game->board[j][i] == '*')
                 k++;
 
         }
@@ -485,43 +415,40 @@ int* scanCompletedRow(void) {
 }
 
 /* breakCompleteRow: Turns a row on the board to '.'s */
-void breakCompletedRow(int row)
+void breakCompletedRow(Game* game, int row)
 {
     int i;
     for (i = 1; i < BOARD_WIDTH - 1; i++)
-        board[row][i] = '.';
-    // TODO: Idk how scoring works in Tetris so it goes up 1 per row for now.
-    score++;
+        game->board[row][i] = '.';
+    game->totalLinesCleared++;
+    game->score += 40 * (game->level);
 
 }
 
 /* sweepBoard: small little function that checks for completed rows
    and calls breakCompletedRow on the appropriate row. Right now I
    only intend to do this after a piece is placed. */
-void sweepBoard(void)
+void sweepBoard(Game* game)
 {
-    int scancompletedRow();
-    void breakCompletedRow(int);
-    void dropRows(int);
     int topRowBroken = 0;
 
     int* rowCheck;
     int i;
-    for (i = 0, (rowCheck = scanCompletedRow()); i < 4 && *rowCheck > 0; i++, rowCheck++)
+    for (i = 0, (rowCheck = scanCompletedRow(game)); i < 4 && *rowCheck > 0; i++, rowCheck++)
     {
-        breakCompletedRow(*rowCheck);
+        breakCompletedRow(game,*rowCheck);
         if (topRowBroken == 0)
             topRowBroken = *rowCheck;
         *rowCheck = 0;
     }
 
     if (topRowBroken > 0)
-        dropRows(topRowBroken);
+        dropRows(game,topRowBroken);
 }
 
 /* dropRows: drops remaining placed blocks down after completed rows
  * are broken. Takes the top row broken as a parameter */
-void dropRows(int topRowBroken)
+void dropRows(Game* game,int topRowBroken)
 {
     int i, j, k;
     // TODO: this might be doing more work than we need it to. If we
@@ -530,18 +457,18 @@ void dropRows(int topRowBroken)
     {
         for (i = 1; i < BOARD_WIDTH - 1; i++)
         {
-            if (board[j][i] == '*')
+            if (game->board[j][i] == '*')
             {
                 //erase the current block
-                board[j][i] = '.';
+                game->board[j][i] = '.';
 
                 //find the bottom place on the board that is not a * or _
-                for (k = 0; board[j + k][i] != '*' && board[j + k][i] != '_'; k++)
+                for (k = 0; game->board[j + k][i] != '*' && game->board[j + k][i] != '_'; k++)
                     ;
                 k--;
 
                 //re-draw the block at that location
-                board[j + k][i] = '*';
+                game->board[j + k][i] = '*';
 
 
             }
