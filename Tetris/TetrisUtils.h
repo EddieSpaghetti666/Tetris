@@ -2,8 +2,8 @@
 static const int FRAME_RATE = 1000 / 2;
 static const int BOARD_WIDTH = 12;
 static const int BOARD_HEIGHT = 21;
-static const int TETROMINO_WIDTH = 4; //Maximum width of a tetromino.
-static const int TETROMINO_HEIGHT = 4; //Maximum height of a tetromino.
+static const int TETROMINO_WIDTH = 3; //Maximum width of a tetromino.
+static const int TETROMINO_HEIGHT = 3; //Maximum height of a tetromino.
 static const short Z_KEY = 0x5A;
 static const int NUMBER_OF_SHAPES = 7;
 static const int TETRAMINO_STARTING_XPOS = 5;
