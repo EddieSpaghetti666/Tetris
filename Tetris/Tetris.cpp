@@ -2,10 +2,6 @@
 #include <sys/timeb.h>
 #include <time.h>
 #include "TetrisUtils.h"
-#include <simple2d.h>
-#include <SDL2/SDL.h>
-#undef main
-
 
 //NOTE I switched to using system("cls") instead of the escape
 // sequences but this is Windows only
@@ -29,40 +25,40 @@ typedef struct
 } Tetranimo;
 
 const shape SHAPES[NUMBER_OF_SHAPES] = {
-    {0,1,1, //SQUARE
-     0,1,1,
-     0,0,0,
-     },
+    {0,1,1,0, //SQUARE
+     0,1,1,0,
+     0,0,0,0,
+     0,0,0,0},
 
-    {1,1,1, //LINE
-     0,0,0,
-     0,0,0
-     },
+    {1,1,1,1, //LINE
+     0,0,0,0,
+     0,0,0,0,
+     0,0,0,0},
 
-    {0,1,0, //T
-     1,1,1,
-     0,0,0,
-    },
+    {0,1,1,1, //T
+     0,0,1,0,
+     0,0,0,0,
+     0,0,0,0},
 
-    {1,0,0, //L
-     1,1,1,
-     0,0,0,
-    },
+    {0,1,0,0, //L
+     0,1,0,0,
+     0,1,1,0,
+     0,0,0,0},
 
-    {0,0,1, //J
-     1,1,1,
-     0,0,0,
-     },
+    {0,1,0,0, //J
+     0,1,0,0,
+     0,1,1,0,
+     0,0,0,0},
 
-    {0,1,1, //S
-     1,1,0,
-     0,0,0,
-     },
+    {0,1,1,0, //S
+     1,1,0,0,
+     0,0,0,0,
+     0,0,0,0},
 
-    {1,1,0, //Z
-     0,1,1,
-     0,0,0,
-    }
+    {0,1,1,0, //Z
+     0,0,1,1,
+     0,0,0,0,
+     0,0,0,0}
 };
 
 
@@ -117,22 +113,8 @@ Tetranimo spawnTetanimo();
 //Flag to tell whether current piece is still active and movable. When this is false, you know to spawn a new piece. This is garbage?
 bool piece_active = 1;
 
-void render() {
-    S2D_DrawTriangle(
-        320, 50, 1, 0, 0, 1,
-        540, 430, 0, 1, 0, 1,
-        100, 430, 0, 0, 1, 1
-    );
-}
-
 
 int main() {
-
-    S2D_Window* window = S2D_CreateWindow(
-        "Hello Triangle", 640, 480, NULL, render, 0
-    );
-
-    S2D_Show(window);
 
 
 
@@ -199,8 +181,6 @@ int main() {
     }
 
     teardown();
-
-    return 0;
 
 
 }
