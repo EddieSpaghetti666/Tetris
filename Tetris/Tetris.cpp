@@ -17,10 +17,10 @@ int main() {
 
     /* Game Loop */
     while (game->state != GameState::OVER) {
-      
+
         ftime(&frameEnd);
         frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
-       
+
         if (int input = GetAsyncKeyState(VK_ESCAPE) & (1 << 15) != 0)
             playerAction = PlayerAction::QUIT;
         else if (int input = GetAsyncKeyState(VK_LEFT) & (1 << 15) != 0)
@@ -40,7 +40,7 @@ int main() {
             if (!game->pieceIsActive) {
                 game->activePiece = spawnTetranimo();
                 spawnActivePiece(game);
-                game->activePiece.type == Type::ACTIVE;
+                game->activePiece.type = Type::ACTIVE;
                 game->pieceIsActive = true;
                 playerAction = PlayerAction::IDLE;
             }
@@ -126,7 +126,7 @@ void update(PlayerAction playerAction, Game* game) {
 
 void draw(Game* game) {
     system("cls");
-    printf("Lines:%d\nLevel:%d\n\nSCORE:%d\n\n", game->totalLinesCleared,game->level,game->score);
+    printf("Lines:%d\nLevel:%d\n\nSCORE:%d\n\n", game->totalLinesCleared, game->level, game->score);
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
             printf("%c", game->board[i][j]);
@@ -217,12 +217,12 @@ void rotateActivePiece(Tetranimo* piece, Board board, bool clockwise) {
         rotatedPoints[i] = rotatedPoint;
     }
     eraseActivePiece(piece, board);
-    if (!checkCollision(rotatedPoints,board)) {
+    if (!checkCollision(rotatedPoints, board)) {
         memcpy(piece->points, rotatedPoints, sizeof(piece->points));
         piece->pivot = piece->points[1];
     }
     drawPiece(piece, board);
-   
+
 }
 
 void forceActivePieceDown(Game* game)
@@ -237,7 +237,7 @@ void forceActivePieceDown(Game* game)
 void drawPiece(Tetranimo* piece, Board board) {
     for (int i = 0; i < TETROMINO_POINTS; i++) {
         board[piece->points[i].y][piece->points[i].x] = '#';
-   }
+    }
 }
 
 /* erasePiece: Erases a piece from the board */
@@ -332,44 +332,45 @@ void breakCompletedRow(Game* game, int row)
 void sweepBoard(Game* game)
 {
     int topRowBroken = 0;
+    int rowsBroken = 0;
 
     int* rowCheck;
     int i;
     for (i = 0, (rowCheck = scanCompletedRow(game->board)); i < 4 && *rowCheck > 0; i++, rowCheck++)
     {
-        breakCompletedRow(game,*rowCheck);
+        breakCompletedRow(game, *rowCheck);
+        rowsBroken++;
         if (topRowBroken == 0)
             topRowBroken = *rowCheck;
         *rowCheck = 0;
     }
 
     if (topRowBroken > 0)
-        dropRows(game,topRowBroken);
+        dropRows(game, topRowBroken, rowsBroken);
 }
 
 /* dropRows: drops remaining placed blocks down after completed rows
  * are broken. Takes the top row broken as a parameter */
-void dropRows(Game* game,int topRowBroken)
+void dropRows(Game* game, int topRowBroken, int rowsBroken)
 {
     int i, j, k;
-    // TODO: this might be doing more work than we need it to. If we
-    // made the check j > topRowBroken - 4 would that be enough?
-    for (j = topRowBroken - 1; j > topRowBroken - 5; j--)
+
+    for (j = topRowBroken - 1; j > 0; j--)
     {
         for (i = 1; i < BOARD_WIDTH - 1; i++)
         {
             if (game->board[j][i] == '*')
             {
-                //erase the current block
+                //Erase the current square
                 game->board[j][i] = '.';
 
-                //find the bottom place on the board that is not a * or _
-                for (k = 0; game->board[j + k][i] != '*' && game->board[j + k][i] != '_'; k++)
+                //drop the square the amount of rows broken 
+                /*for (k = rowsBroken; game->board[j + k][i] != '*' && game->board[j + k][i] != '_' && k > 0; k--)
                     ;
-                k--;
+                    k;*/
 
-                //re-draw the block at that location
-                game->board[j + k][i] = '*';
+                    //re-draw the block at that location
+                game->board[j + rowsBroken][i] = '*';
 
 
             }

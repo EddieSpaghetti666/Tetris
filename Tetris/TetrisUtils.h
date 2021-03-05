@@ -17,7 +17,7 @@ typedef struct {
 typedef Point StartingPos[4];
 
 const StartingPos SHAPES[7] = {
-	{ {5,0}, {5,1}, {5,2}, {5,3} }, // Line
+    { {5,0}, {5,1}, {5,2}, {5,3} }, // Line
     { {5,0}, {6,0}, {5,1}, {6,1} }, // Square
     { {4,0}, {4,1}, {5,1}, {6,1} }, // J
     { {4,1}, {5,1}, {6,1}, {6,0} }, // L
@@ -100,7 +100,7 @@ void spawnActivePiece(Game*);
 void moveActivePiece(Game*, PieceDirection);
 void rotateActivePiece(Tetranimo*, Board, bool);
 void forceActivePieceDown(Game*);
-void dropRows(Game*, int);
+void dropRows(Game*, int, int);
 Tetranimo spawnTetranimo();
 
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
