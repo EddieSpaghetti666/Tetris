@@ -5,80 +5,11 @@
 #include <stdlib.h> /* for system("cls")*/
 #include <windows.h> /* for GetAsyncKeyState */
 
-#define bool char
-
-typedef struct
-{
-    int xPos;
-    int yPos;
-    shape shape;
-} Tetranimo;
-
-typedef enum tetranimoes {
-    SQUARE,
-    LINE,
-    T,
-    L,
-    J,
-    S,
-    Z,
-} Tetranimoes;
-
-typedef enum class PlayerAction{
-    IDLE, 
-    MOVE_LEFT,
-    MOVE_RIGHT,
-    MOVE_DOWN,
-    ROTATE_RIGHT,
-    ROTATE_LEFT,
-    FORCE_DOWN,
-    QUIT
-};
-
-typedef enum class PieceDirection{
-    LEFT,
-    RIGHT,
-    DOWN
-};
-
-typedef enum class GameState{
-    PLAYING,
-    PAUSED,
-    OVER
-};
-
-typedef struct {
-    GameState state; 
-    bool pieceIsActive;
-    int level;
-    char board[BOARD_HEIGHT][BOARD_WIDTH];
-    int score;
-    int totalLinesCleared;
-    int framesUntilNextDrop;
-    Tetranimo activePiece;
-} Game;
-
-Game initialize();
-void update(PlayerAction, Game*);
-void draw(Game*);
-void teardown();
-void drawActivePiece(Game*);
-void eraseActivePiece(Game*);
-bool checkCollision(Game*, int, int);
-void placeActivePiece(Game*);
-void sweepBoard(Game*);
-void spawnActivePiece(Game*);
-void moveActivePiece(Game*, PieceDirection);
-void rotateActivePiece(Game*, bool);
-void forceActivePieceDown(Game*);
-void dropRows(Game*, int);
-Tetranimo spawnTetranimo();
-
 int main() {
 
-    struct timeb gameStart, gameCurrent, frameStart, frameEnd;
+    struct timeb frameStart, frameEnd;
     ftime(&frameStart);
-    int frameTimeDiff, timeSinceStart;
+    int frameTimeDiff;
 
     Game* game = &initialize();
     PlayerAction playerAction = PlayerAction::IDLE;
@@ -109,6 +40,7 @@ int main() {
             if (!game->pieceIsActive) {
                 game->activePiece = spawnTetranimo();
                 spawnActivePiece(game);
+                game->activePiece.type == Type::ACTIVE;
                 game->pieceIsActive = true;
                 playerAction = PlayerAction::IDLE;
             }
@@ -171,11 +103,11 @@ void update(PlayerAction playerAction, Game* game) {
         break;
     }
     case PlayerAction::ROTATE_RIGHT: {
-        rotateActivePiece(game, true); //True, because you are rotating clockwise.
+        rotateActivePiece(&game->activePiece, game->board, true); //True, because you are rotating clockwise.
         break;
     }
     case PlayerAction::ROTATE_LEFT: {
-        rotateActivePiece(game, false); //False, you are rotating anticlockwise
+        rotateActivePiece(&game->activePiece, game->board, false); //False, you are rotating anticlockwise
         break;
     }
     case PlayerAction::FORCE_DOWN: {
@@ -212,48 +144,85 @@ void teardown() {
 /* spawnPiece: spawns a piece centered at the top of the board. It can be any shaped piece */
 void spawnActivePiece(Game* game)
 {
-    drawActivePiece(game);
+    drawPiece(&game->activePiece, game->board);
 }
 
 void moveActivePiece(Game* game, PieceDirection direction)
 {
-    eraseActivePiece(game);
+    eraseActivePiece(&game->activePiece, game->board);
+    Point destPoints[TETROMINO_POINTS];
+    Point newPoint;
+    //TODO: there is probably a better way to do this than looping through every time but I can't think right now.
     switch (direction) {
     case PieceDirection::LEFT: {
-        game->activePiece.xPos--;
+        for (int i = 0; i < TETROMINO_POINTS; i++) {
+            newPoint.x = game->activePiece.points[i].x - 1;
+            newPoint.y = game->activePiece.points[i].y;
+            destPoints[i] = newPoint;
+        }
+        if (!checkCollision(destPoints, game->board)) {
+            memcpy(game->activePiece.points, destPoints, sizeof(game->activePiece.points));
+            game->activePiece.pivot = game->activePiece.points[1];
+        }
         break;
     }
     case PieceDirection::RIGHT: {
-        game->activePiece.xPos++;
+        for (int i = 0; i < TETROMINO_POINTS; i++) {
+            newPoint.x = game->activePiece.points[i].x + 1;
+            newPoint.y = game->activePiece.points[i].y;
+            destPoints[i] = newPoint;
+        }
+        if (!checkCollision(destPoints, game->board)) {
+            memcpy(game->activePiece.points, destPoints, sizeof(game->activePiece.points));
+            game->activePiece.pivot = game->activePiece.points[1];
+        }
         break;
     }
     case PieceDirection::DOWN: {
-        game->activePiece.yPos++;
+        for (int i = 0; i < TETROMINO_POINTS; i++) {
+            newPoint.x = game->activePiece.points[i].x;
+            newPoint.y = game->activePiece.points[i].y + 1;
+            destPoints[i] = newPoint;
+        }
+        if (!checkCollision(destPoints, game->board)) {
+            memcpy(game->activePiece.points, destPoints, sizeof(game->activePiece.points));
+            game->activePiece.pivot = game->activePiece.points[1];
+        }
+        else {
+            placeActivePiece(game);
+            return;
+        }
         break;
     }
     }
-    drawActivePiece(game);
+    drawPiece(&game->activePiece, game->board);
 }
 
 
-void rotateActivePiece(Game* game, bool clockwise) {
-    eraseActivePiece(game);
-
-    transposeOfTetranimoShapeMatrix(game->activePiece.shape);
-
-    for (int i = 0; i < TETROMINO_WIDTH; i++) {
-        for (int j = 0; j < TETROMINO_HEIGHT / 2; j++) {
-            //The only thing that changes if you rotate clockwise vs anticlockwise is whether or not you swap elements in the rows or columns:
-            if (clockwise) {
-                swap(game->activePiece.shape, i, j, i, TETROMINO_HEIGHT - j - 1);
-            }
-            else {
-                //ANTICLOCKWISE ROTATION
-                swap(game->activePiece.shape, j, i, TETROMINO_WIDTH - j - 1, i);
-            }
-        }
+void rotateActivePiece(Tetranimo* piece, Board board, bool clockwise) {
+    Point relativeToPivot[4];
+    Point* result = getPointsRelativeToPivot(piece->points, piece->pivot);
+    for (int i = 0; i < 4; i++) {
+        relativeToPivot[i] = result[i];
     }
-    drawActivePiece(game);
+    Point rotatedPoints[TETROMINO_POINTS];
+    for (int i = 0; i < TETROMINO_POINTS; i++) {
+        Point rotatedPoint;
+        int vector[2] = { relativeToPivot[i].x, relativeToPivot[i].y };
+        int rotationMatrix[2][2] = { 0, -1,
+                                    1,  0 };
+        int* rotatedVector = matrixVectorProduct2(vector, rotationMatrix);
+        rotatedPoint.x = rotatedVector[0] + piece->pivot.x;
+        rotatedPoint.y = rotatedVector[1] + piece->pivot.y;
+        rotatedPoints[i] = rotatedPoint;
+    }
+    eraseActivePiece(piece, board);
+    if (!checkCollision(rotatedPoints,board)) {
+        memcpy(piece->points, rotatedPoints, sizeof(piece->points));
+        piece->pivot = piece->points[1];
+    }
+    drawPiece(piece, board);
+   
 }
 
 void forceActivePieceDown(Game* game)
@@ -265,109 +234,45 @@ void forceActivePieceDown(Game* game)
 }
 
 
-void drawActivePiece(Game* game) {
-
-    for (int i = 0; i < TETROMINO_WIDTH && game->activePiece.yPos + i < BOARD_HEIGHT; i++)
-    {
-        for (int j = 0; j < TETROMINO_HEIGHT && game->activePiece.xPos + j < BOARD_WIDTH; j++)
-        {
-            if (game->activePiece.shape[i][j] == 1)
-            {
-                if (!(checkCollision(game, (game->activePiece.yPos + i), (game->activePiece.xPos + j))))
-                {
-
-                    game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] = '#';
-                }
-                else
-                {
-                    return;
-                }
-
-            }
-
-        }
-    }
+void drawPiece(Tetranimo* piece, Board board) {
+    for (int i = 0; i < TETROMINO_POINTS; i++) {
+        board[piece->points[i].y][piece->points[i].x] = '#';
+   }
 }
 
 /* erasePiece: Erases a piece from the board */
-void eraseActivePiece(Game* game)
+void eraseActivePiece(Tetranimo* piece, Board board)
 {
-    for (int i = 0; i < TETROMINO_WIDTH && game->activePiece.yPos + i < BOARD_HEIGHT; i++)
-    {
-        for (int j = 0; j < TETROMINO_HEIGHT && game->activePiece.xPos + j < BOARD_WIDTH; j++)
-        {
-            if (game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] == '#')
-                game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] = '.';
-
-        }
+    for (int i = 0; i < TETROMINO_POINTS; i++) {
+        board[piece->points[i].y][piece->points[i].x] = '.';
     }
 
 }
 
 /* checkCollision: checks to see if the piece collided with the edges
  * of the board or a placed piece. If true, it returns true and places the piece. */
-bool checkCollision(Game* game, int dest_row, int dest_col)
+bool checkCollision(Point points[], Board board)
 {
-    if (game->board[dest_row][dest_col] != '|' && game->board[dest_row][dest_col] != '_' && game->board[dest_row][dest_col] != '*')
-    {
-        //There was no collision
-        return false;
-    }
-    else if (game->board[dest_row][dest_col] == '*')
-    {
-        eraseActivePiece(game);
-        game->activePiece.yPos--;
-        drawActivePiece(game);
-        placeActivePiece(game);
-
-        return true;
-    }
-    else
-    {
-        if (dest_col <= 0)
-        {
-            //COLLISION WITH THE LEFT SIDE OF THE BOARD
-            eraseActivePiece(game);
-            game->activePiece.xPos++;
-            drawActivePiece(game);
+    for (int i = 0; i < TETROMINO_POINTS; i++) {
+        int row = points[i].x;
+        int col = points[i].y;
+        if (row > BOARD_WIDTH - 1 || row < 0 || col > BOARD_HEIGHT - 1 || col < 0) {
             return true;
         }
-        if (dest_col > BOARD_WIDTH - 2)
-        {
-            //COLLISION WITH THE RIGHT SIDE OF THE BOARD
-            eraseActivePiece(game);
-            game->activePiece.xPos--;
-            drawActivePiece(game);
-            return true;
-        }
-        if (dest_row > BOARD_HEIGHT - 2)
-        {
-            //COLLISION WITH THE BOTTOM OF THE BOARD
-            eraseActivePiece(game);
-            game->activePiece.yPos--;
-            drawActivePiece(game);
-            //If you are colliding with the bottom of the board, you ran out of time. Its over. The piece should be placed automatically for you.
-            placeActivePiece(game);
-            return true;
-        }
-        else {
-
-            system("cls");
-            printf("error: checkCollision, invalid collision\n");
+        if (board[col][row] != '.') {
             return true;
         }
     }
+    return false;
 }
 
 Tetranimo spawnTetranimo() {
     int shapeIndex;
     srand((unsigned)time(NULL));
     shapeIndex = rand() % 7;
-
     Tetranimo tetranimo;
-    tetranimo.xPos = TETRAMINO_STARTING_XPOS;
-    tetranimo.yPos = 0;
-    memcpy(tetranimo.shape, &SHAPES[shapeIndex], sizeof(SHAPES[shapeIndex]));
+    memcpy(tetranimo.points, SHAPES[shapeIndex], sizeof(tetranimo.points));
+    tetranimo.pivot = tetranimo.points[1];
 
     return tetranimo;
 
@@ -376,14 +281,10 @@ Tetranimo spawnTetranimo() {
 /* placePiece: places a piece onto the board */
 void placeActivePiece(Game* game)
 {
-    for (int i = 0; i < TETROMINO_WIDTH && game->activePiece.yPos + i < BOARD_HEIGHT; i++)
-    {
-        for (int j = 0; j < TETROMINO_HEIGHT && game->activePiece.xPos + j < BOARD_WIDTH; j++)
-        {
-            if (game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] == '#')
-                game->board[game->activePiece.yPos + i][game->activePiece.xPos + j] = '*';
-
-        }
+    for (int i = 0; i < TETROMINO_POINTS; i++) {
+        int row = game->activePiece.points[i].y;
+        int col = game->activePiece.points[i].x;
+        game->board[row][col] = '*';
     }
     //You placed the current piece so set the piece active flag off.
     game->pieceIsActive = false;
@@ -393,7 +294,7 @@ void placeActivePiece(Game* game)
 /* scanCompleteRow: Scans the entire board, and if it finds a
    completed row of '*'s it keeps track of it in an array of ints
    pointed to by *rows */
-int* scanCompletedRow(Game* game) {
+int* scanCompletedRow(Board board) {
     static int rows[4];
     int rowIndex = 0;
     int i, j, k;
@@ -402,7 +303,7 @@ int* scanCompletedRow(Game* game) {
     {
         for (i = 0, k = 0; i < BOARD_WIDTH; i++)
         {
-            if (game->board[j][i] == '*')
+            if (board[j][i] == '*')
                 k++;
 
         }
@@ -434,7 +335,7 @@ void sweepBoard(Game* game)
 
     int* rowCheck;
     int i;
-    for (i = 0, (rowCheck = scanCompletedRow(game)); i < 4 && *rowCheck > 0; i++, rowCheck++)
+    for (i = 0, (rowCheck = scanCompletedRow(game->board)); i < 4 && *rowCheck > 0; i++, rowCheck++)
     {
         breakCompletedRow(game,*rowCheck);
         if (topRowBroken == 0)
@@ -477,3 +378,4 @@ void dropRows(Game* game,int topRowBroken)
         }
     }
 }
+
