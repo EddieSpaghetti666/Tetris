@@ -4,6 +4,7 @@ static const int BOARD_WIDTH = 12;
 static const int BOARD_HEIGHT = 21;
 static const int TETROMINO_POINTS = 4;
 static const short Z_KEY = 0x5A;
+static const short C_KEY = 0x43;
 static const int TETRAMINO_STARTING_XPOS = 5;
 static const int INITIAL_GRAVITY = 15;
 
@@ -36,6 +37,7 @@ typedef enum class Type {
 
 typedef struct
 {
+    int shape;
     Type type;
     Point points[TETROMINO_POINTS];
     Point pivot;
@@ -60,7 +62,8 @@ typedef enum class PlayerAction {
     ROTATE_RIGHT,
     ROTATE_LEFT,
     FORCE_DOWN,
-    QUIT
+    QUIT,
+    HOLD
 };
 
 typedef enum class PieceDirection {
@@ -78,6 +81,7 @@ typedef enum class GameState {
 typedef struct {
     GameState state;
     bool pieceIsActive;
+    bool pieceIsHeld;
     int level;
     Board board;
     int score;
@@ -85,6 +89,7 @@ typedef struct {
     int framesUntilNextDrop;
     Tetranimo activePiece;
     Tetranimo ghostPiece;
+    Tetranimo heldPiece;
 } Game;
 
 Game initialize();

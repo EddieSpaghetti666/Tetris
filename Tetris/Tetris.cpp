@@ -35,6 +35,8 @@ int main() {
             playerAction = PlayerAction::ROTATE_LEFT;
         else if (int input = GetAsyncKeyState(VK_SPACE) & (1 << 15) != 0)
             playerAction = PlayerAction::FORCE_DOWN;
+        else if (int input = GetAsyncKeyState(C_KEY) & (1 << 15) != 0)
+            playerAction = PlayerAction::HOLD;
 
         if (frameTimeDiff > FRAME_RATE) {
             if (!game->pieceIsActive) {
@@ -65,8 +67,11 @@ Game initialize() {
     game.score = 0;
     game.totalLinesCleared = 0;
     game.pieceIsActive = false;
+    game.pieceIsHeld = false;
     game.state = GameState::PLAYING;
     game.framesUntilNextDrop = INITIAL_GRAVITY;
+    //This line is so that the held piece appears correctly as None instead of Line
+    game.heldPiece.shape = 69;
     //fill in the board.
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -85,6 +90,7 @@ Game initialize() {
 }
 
 void update(PlayerAction playerAction, Game* game) {
+    void holdPiece(Game * game);
     switch (playerAction) {
     case PlayerAction::QUIT: {
         game->state = GameState::OVER;
@@ -114,7 +120,12 @@ void update(PlayerAction playerAction, Game* game) {
         forceActivePieceDown(game);
         break;
     }
+    case PlayerAction::HOLD: {
+        holdPiece(game);
+        break;
     }
+    }
+
     game->level = 1 + game->totalLinesCleared / 1;
     if (game->framesUntilNextDrop == 0) {
         moveActivePiece(game, PieceDirection::DOWN);
@@ -134,6 +145,36 @@ void draw(Game* game) {
         printf("\n");
     }
 
+    /*TODO: THIS SECTION IS FOR THE HELD PIECE. MOVE THIS OUT TO A SEPERATE FUNCTION? */
+    char* held;
+    switch (game->heldPiece.shape)
+    {
+    case 0:
+        held = "Line";
+        break;
+    case 1:
+        held = "Square";
+        break;
+    case 2:
+        held = "J";
+        break;
+    case 3:
+        held = "L";
+        break;
+    case 4:
+        held = "S";
+        break;
+    case 5:
+        held = "T";
+        break;
+    case 6:
+        held = "Z";
+        break;
+    default:
+        held = "None";
+        break;
+    }
+    printf("\nHeld Piece: %s", held);
 }
 
 void teardown() {
@@ -210,7 +251,7 @@ void rotateActivePiece(Tetranimo* piece, Board board, bool clockwise) {
         Point rotatedPoint;
         int vector[2] = { relativeToPivot[i].x, relativeToPivot[i].y };
         int rotationMatrix[2][2] = { 0, -1,
-                                    1,  0 };
+            1,  0 };
         int* rotatedVector = matrixVectorProduct2(vector, rotationMatrix);
         rotatedPoint.x = rotatedVector[0] + piece->pivot.x;
         rotatedPoint.y = rotatedVector[1] + piece->pivot.y;
@@ -273,6 +314,7 @@ Tetranimo spawnTetranimo() {
     Tetranimo tetranimo;
     memcpy(tetranimo.points, SHAPES[shapeIndex], sizeof(tetranimo.points));
     tetranimo.pivot = tetranimo.points[1];
+    tetranimo.shape = shapeIndex;
 
     return tetranimo;
 
@@ -350,7 +392,7 @@ void sweepBoard(Game* game)
 }
 
 /* dropRows: drops remaining placed blocks down after completed rows
- * are broken. Takes the top row broken as a parameter */
+ * are broken. Takes the top row broken and number of rows broken as parameters */
 void dropRows(Game* game, int topRowBroken, int rowsBroken)
 {
     int i, j, k;
@@ -364,12 +406,7 @@ void dropRows(Game* game, int topRowBroken, int rowsBroken)
                 //Erase the current square
                 game->board[j][i] = '.';
 
-                //drop the square the amount of rows broken 
-                /*for (k = rowsBroken; game->board[j + k][i] != '*' && game->board[j + k][i] != '_' && k > 0; k--)
-                    ;
-                    k;*/
-
-                    //re-draw the block at that location
+                //re-draw the block at that location
                 game->board[j + rowsBroken][i] = '*';
 
 
@@ -380,3 +417,48 @@ void dropRows(Game* game, int topRowBroken, int rowsBroken)
     }
 }
 
+/* holdPiece: Holds the Active Piece so that the player can use it again */
+void holdPiece(Game* game)
+{
+    Tetranimo temp;
+
+    //If there isn't a piece already held
+    if (game->pieceIsHeld == FALSE)
+    {
+        // set the heldPiece to activePiece;
+        game->heldPiece = game->activePiece;
+
+        eraseActivePiece(&game->activePiece, game->board);
+
+        //set the activePiece flag to false
+        game->pieceIsActive = FALSE;
+
+        game->pieceIsHeld = TRUE;
+    }
+
+    //If a piece is held already
+    else if (game->pieceIsHeld == TRUE)
+    {
+        //erase the activePiece
+        eraseActivePiece(&game->activePiece, game->board);
+
+        //store the activePiece in a temp variable
+        temp = game->activePiece;
+
+        //set the activePiece to heldPiece
+        game->activePiece = game->heldPiece;
+
+        //set the heldPiece to the temp
+        game->heldPiece = temp;
+
+        //set the new activePiece's position back to it's starting position
+        //game->activePiece.points = SHAPES[game->activePiece.shape];
+
+        memcpy(game->activePiece.points, SHAPES[game->activePiece.shape], sizeof(game->activePiece.points));
+
+        drawPiece(&game->activePiece, game->board);
+
+    }
+
+
+}
