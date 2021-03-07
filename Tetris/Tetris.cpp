@@ -4,6 +4,7 @@
 #include "TetrisUtils.h"
 #include <stdlib.h> /* for system("cls")*/
 #include <windows.h> /* for GetAsyncKeyState */
+#include <conio.h>
 
 int main() {
 
@@ -67,7 +68,8 @@ int main() {
 }
 
 Game initialize() {
-    system("cls");
+    //system("cls");
+    clearScreen();
     Game game;
     game.level = 1;
     game.score = 0;
@@ -165,7 +167,8 @@ void update(PlayerAction playerAction, Game* game) {
 
 void draw(Game* game) {
     
-    system("cls");
+    //system("cls");
+    clearScreen();
     printf("Lines:%d\tLevel:%d\nSCORE:%d\n", game->totalLinesCleared, game->level, game->score);
 
     /*TODO: THIS SECTION IS FOR THE HELD PIECE. MOVE THIS OUT TO A SEPERATE FUNCTION? */
@@ -228,7 +231,10 @@ void draw(Game* game) {
 }
 
 void teardown() {
-    system("cls");
+    for (int i = 0; i < 20; i++) {
+        printf("\n\n\n\n\n");
+    }
+    //clearScreen();
     printf("GAME_OVER!");
 }
 
@@ -360,9 +366,16 @@ Tetranimo spawnTetranimo() {
 /* placePiece: places a piece onto the board */
 void placeActivePiece(Game* game)
 {
+    Tetranimo activePiece = game->activePiece;
     for (int i = 0; i < TETROMINO_POINTS; i++) {
-        int row = game->activePiece.points[i].y;
-        int col = game->activePiece.points[i].x;
+        if (activePiece.points[i].y == 0 && game->board[activePiece.points[i].x][0] != '.') {
+            game->state = GameState::OVER;
+            return;
+        }
+    }
+    for (int i = 0; i < TETROMINO_POINTS; i++) {
+        int row = activePiece.points[i].y;
+        int col = activePiece.points[i].x;
         game->board[row][col] = '*';
     }
     //You placed the current piece so set the piece active flag off.
@@ -529,6 +542,14 @@ void updateGhostPiece(Game* game) {
         }
     }
     game->ghostPiece = updatedGhostPiece;
+}
+
+void clearScreen() {
+    COORD coord;
+    coord.X = 0;
+    coord.Y = 0;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+
 }
 
 

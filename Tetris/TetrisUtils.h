@@ -168,6 +168,7 @@ void dropRows(Game*, int, int);
 void handleGravity(Game*);
 void updateGhostPiece(Game*);
 Tetranimo spawnTetranimo();
+void clearScreen();
 
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
     int pivot_x = pivot.x;
