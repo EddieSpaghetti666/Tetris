@@ -27,6 +27,12 @@ const StartingPos SHAPES[7] = {
     { {4,0}, {5,0}, {5,1}, {6,1} }  // Z
 };
 
+static const int ROTATION_MATRIX_90[2][2] = { 0, -1,
+                                              1, 0 };
+static const int ROTATION_MATRIX_270[2][2] = { 0, 1,
+                                              -1, 0 };
+
+
 typedef char Board[BOARD_HEIGHT][BOARD_WIDTH];
 
 typedef enum class Type {
@@ -81,6 +87,7 @@ typedef enum class GameState {
 typedef struct {
     GameState state;
     bool pieceIsActive;
+    bool drawGhostPiece;
     bool pieceIsHeld;
     int level;
     Board board;
@@ -96,16 +103,18 @@ Game initialize();
 void update(PlayerAction, Game*);
 void draw(Game*);
 void teardown();
-void drawPiece(Tetranimo*, Board);
+void drawPiece(Tetranimo, Board);
 void eraseActivePiece(Tetranimo*, Board);
 bool checkCollision(Point[], Board);
 void placeActivePiece(Game*);
 void sweepBoard(Game*);
 void spawnActivePiece(Game*);
-void moveActivePiece(Game*, PieceDirection);
-void rotateActivePiece(Tetranimo*, Board, bool);
-void forceActivePieceDown(Game*);
+Tetranimo movePiece(Tetranimo, PieceDirection);
+Tetranimo rotatePiece(Tetranimo, Board, bool);
+Tetranimo forcePieceDown(Tetranimo, Board);
 void dropRows(Game*, int, int);
+void handleGravity(Game*);
+void updateGhostPiece(Game*);
 Tetranimo spawnTetranimo();
 
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
