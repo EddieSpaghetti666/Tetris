@@ -11,12 +11,13 @@ int main() {
     ftime(&frameStart);
     int frameTimeDiff;
 
-    Game* game = &initialize();
+    Game game = initialize();
+  
     PlayerAction playerAction = PlayerAction::IDLE;
 
 
     /* Game Loop */
-    while (game->state != GameState::OVER) {
+    while (game.state != GameState::OVER) {
 
         ftime(&frameEnd);
         frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
@@ -39,16 +40,20 @@ int main() {
             playerAction = PlayerAction::HOLD;
 
         if (frameTimeDiff > FRAME_RATE) {
-            if (!game->pieceIsActive) {
-                game->activePiece = spawnTetranimo();
-                spawnActivePiece(game);
-                game->activePiece.type = Type::ACTIVE;
-                game->pieceIsActive = true;
-                updateGhostPiece(game);
+            if (!game.pieceIsActive) {
+                game.activePiece = game.upcomingPieces.front();
+                game.upcomingPieces.pop();
+                Tetranimo nextQueuedPiece = spawnTetranimo();
+                nextQueuedPiece.type == Type::QUEUED;
+                game.upcomingPieces.push(nextQueuedPiece);
+                spawnActivePiece(&game);
+                game.activePiece.type = Type::ACTIVE;
+                game.pieceIsActive = true;
+                updateGhostPiece(&game);
                 playerAction = PlayerAction::IDLE;
             }
-            update(playerAction, game);
-            draw(game);
+            update(playerAction, &game);
+            draw(&game);
             ftime(&frameStart);
             playerAction = PlayerAction::IDLE;
         }
@@ -72,7 +77,14 @@ Game initialize() {
     game.state = GameState::PLAYING;
     game.framesUntilNextDrop = INITIAL_GRAVITY;
     //This line is so that the held piece appears correctly as None instead of Line
-    game.heldPiece.shape = 69;
+    game.heldPiece.shape = EMPTY;
+    std::queue<Tetranimo> pieceQueue;
+    for (int i = 0; i < PIECE_QUEUE_SIZE; i++) {
+        Tetranimo queuedPiece = spawnTetranimo();
+        queuedPiece.type = Type::QUEUED;
+        pieceQueue.push(queuedPiece);
+    }
+    game.upcomingPieces = pieceQueue;
     //fill in the board.
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -152,8 +164,58 @@ void update(PlayerAction playerAction, Game* game) {
 }
 
 void draw(Game* game) {
+    
     system("cls");
-    printf("Lines:%d\nLevel:%d\n\nSCORE:%d\n\n", game->totalLinesCleared, game->level, game->score);
+    printf("Lines:%d\tLevel:%d\nSCORE:%d\n", game->totalLinesCleared, game->level, game->score);
+
+    /*TODO: THIS SECTION IS FOR THE HELD PIECE. MOVE THIS OUT TO A SEPERATE FUNCTION? */
+    Shape held;
+    switch (game->heldPiece.shape)
+    {
+    case LINE:
+        memcpy(held, SHAPES[LINE], sizeof(held));
+        break;
+    case SQUARE:
+        memcpy(held, SHAPES[SQUARE], sizeof(held));
+        break;
+    case J:
+        memcpy(held, SHAPES[J], sizeof(held));
+        break;
+    case L:
+        memcpy(held, SHAPES[L], sizeof(held));
+        break;
+    case S:
+        memcpy(held, SHAPES[S], sizeof(held));
+        break;
+    case T:
+        memcpy(held, SHAPES[T], sizeof(held));
+        break;
+    case Z:
+        memcpy(held, SHAPES[Z], sizeof(held));
+        break;
+    default:
+        memcpy(held, SHAPES[EMPTY], sizeof(held));
+        break;
+    }
+    Shape queued;
+    TetranimoShape nextPieceShape = game->upcomingPieces.front().shape;
+    memcpy(queued, SHAPES[nextPieceShape], sizeof(queued));
+    //NOTE: THIS IS FUCKING RETARDED.
+    printf("Held Piece:\t\t Next Piece:\n");
+    for (int i = 0; i < 4; i++) {
+       for (int j = 0; j < 4; j++) {
+          printf("%c", held[i][j]);
+       }
+       printf("            \t\t");
+       for (int k = 0; k < 4; k++) {
+           printf("%c", queued[i][k]);
+
+       }
+    printf("\n");
+    }
+    
+    
+
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
             printf("%c", game->board[i][j]);
@@ -161,36 +223,8 @@ void draw(Game* game) {
         printf("\n");
     }
 
-    /*TODO: THIS SECTION IS FOR THE HELD PIECE. MOVE THIS OUT TO A SEPERATE FUNCTION? */
-    char held[10];
-    switch (game->heldPiece.shape)
-    {
-    case 0:
-        strcpy_s(held, "Line");
-        break;
-    case 1:
-        strcpy_s(held, "Square");
-        break;
-    case 2:
-        strcpy_s(held, "J");
-        break;
-    case 3:
-        strcpy_s(held, "L");
-        break;
-    case 4:
-        strcpy_s(held, "S");
-        break;
-    case 5:
-        strcpy_s(held, "T");
-        break;
-    case 6:
-        strcpy_s(held, "Z");
-        break;
-    default:
-        strcpy_s(held,"None");
-        break;
-    }
-    printf("\nHeld Piece: %s", held);
+
+    
 }
 
 void teardown() {
@@ -315,9 +349,9 @@ Tetranimo spawnTetranimo() {
     srand((unsigned)time(NULL));
     shapeIndex = rand() % 7;
     Tetranimo tetranimo;
-    memcpy(tetranimo.points, SHAPES[shapeIndex], sizeof(tetranimo.points));
+    memcpy(tetranimo.points, STARTING_COORDS[shapeIndex], sizeof(tetranimo.points));
     tetranimo.pivot = tetranimo.points[1];
-    tetranimo.shape = shapeIndex;
+    tetranimo.shape = (TetranimoShape)shapeIndex;
 
     return tetranimo;
 
@@ -457,7 +491,7 @@ void holdPiece(Game* game)
         //set the new activePiece's position back to it's starting position
         //game->activePiece.points = SHAPES[game->activePiece.shape];
 
-        memcpy(game->activePiece.points, SHAPES[game->activePiece.shape], sizeof(game->activePiece.points));
+        memcpy(game->activePiece.points, STARTING_COORDS[game->activePiece.shape], sizeof(game->activePiece.points));
 
         drawPiece(game->activePiece, game->board);
 

@@ -1,4 +1,5 @@
 #pragma once
+#include <queue>;
 static const int FRAME_RATE = 1000 / 30;
 static const int BOARD_WIDTH = 12;
 static const int BOARD_HEIGHT = 21;
@@ -7,8 +8,11 @@ static const short Z_KEY = 0x5A;
 static const short C_KEY = 0x43;
 static const int TETRAMINO_STARTING_XPOS = 5;
 static const int INITIAL_GRAVITY = 15;
+static const int PIECE_QUEUE_SIZE = 3;
 
 #define bool char
+
+typedef char Shape[4][4];
 
 typedef struct {
     int x;
@@ -17,7 +21,7 @@ typedef struct {
 
 typedef Point StartingPos[4];
 
-const StartingPos SHAPES[7] = {
+const StartingPos STARTING_COORDS[7] = {
     { {5,0}, {5,1}, {5,2}, {5,3} }, // Line
     { {5,0}, {6,0}, {5,1}, {6,1} }, // Square
     { {4,0}, {4,1}, {5,1}, {6,1} }, // J
@@ -25,6 +29,52 @@ const StartingPos SHAPES[7] = {
     { {4,1}, {5,1}, {5,0}, {6,0} }, // S
     { {5,0}, {5,1}, {4,1}, {6,1} }, // T
     { {4,0}, {5,0}, {5,1}, {6,1} }  // Z
+};
+
+static const Shape SHAPES[8] = {
+    { '.', '.', '.', '.',  //Line
+      '#', '#', '#', '#',
+      '.', '.', '.', '.',
+      '.', '.', '.', '.' },
+
+    { '.', '.', '.', '.',  //Square
+      '.', '#', '#', '.',
+      '.', '#', '#', '.',
+      '.', '.', '.', '.' },
+
+    { '.', '.', '.', '.',  //J
+      '#', '.', '.', '.',
+      '#', '#', '#', '.',
+      '.', '.', '.', '.' },
+
+    { '.', '.', '.', '.',  //L
+      '.', '.', '#', '.',
+      '#', '#', '#', '.',
+      '.', '.', '.', '.' },
+
+    { '.', '.', '.', '.',  //S
+      '.', '#', '#', '.',
+      '#', '#', '.', '.',
+      '.', '.', '.', '.' },
+
+    { '.', '.', '.', '.',  //T
+      '.', '#', '.', '.',
+      '#', '#', '#', '.',
+      '.', '.', '.', '.' },
+
+    { '.', '.', '.', '.',  //Z
+      '#', '#', '.', '.',
+      '.', '#', '#', '.',
+      '.', '.', '.', '.' },
+
+    { '.', '.', '.', '.',  //EMPTY
+      '.', '.', '.', '.',
+      '.', '.', '.', '.',
+      '.', '.', '.', '.' }
+
+
+
+
 };
 
 static const int ROTATION_MATRIX_90[2][2] = { 0, -1,
@@ -41,24 +91,25 @@ typedef enum class Type {
     QUEUED
 };
 
+typedef enum TetranimoShape {
+    LINE,
+    SQUARE,
+    J,
+    L,
+    S,
+    T,
+    Z,
+    EMPTY
+};
+
 typedef struct
 {
-    int shape;
+    TetranimoShape shape;
     Type type;
     Point points[TETROMINO_POINTS];
     Point pivot;
 
 } Tetranimo;
-
-typedef enum tetranimoes {
-    SQUARE,
-    LINE,
-    T,
-    L,
-    J,
-    S,
-    Z,
-} Tetranimoes;
 
 typedef enum class PlayerAction {
     IDLE,
@@ -97,6 +148,7 @@ typedef struct {
     Tetranimo activePiece;
     Tetranimo ghostPiece;
     Tetranimo heldPiece;
+    std::queue<Tetranimo> upcomingPieces;
 } Game;
 
 Game initialize();
