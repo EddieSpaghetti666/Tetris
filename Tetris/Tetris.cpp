@@ -40,6 +40,7 @@ int main() {
         else if (int input = GetAsyncKeyState(C_KEY) & (1 << 15) != 0)
             playerAction = PlayerAction::HOLD;
 
+        //TODO: Should this be handled in update instead?
         if (frameTimeDiff > FRAME_RATE) {
             if (!game.pieceIsActive) {
                 game.activePiece = game.upcomingPieces.front();
@@ -67,8 +68,8 @@ int main() {
 
 }
 
+/*This function initializes the necissary Game state and Board. */
 Game initialize() {
-    //system("cls");
     clearScreen();
     Game game;
     game.level = 1;
@@ -104,6 +105,7 @@ Game initialize() {
     return game;
 }
 
+//TODO: Seperate update into smaller more sensible functions?
 void update(PlayerAction playerAction, Game* game) {
     void holdPiece(Game * game);
     eraseActivePiece(&game->activePiece, game->board);
@@ -142,15 +144,15 @@ void update(PlayerAction playerAction, Game* game) {
     case PlayerAction::HOLD: {
         holdPiece(game);
         return;
-        //break;
     }
     }
-    //If there was a collision revert the piece movement.
+    
     if (checkCollision(movedPiece.points, game->board)) {
-        if (playerAction == PlayerAction::MOVE_DOWN) {
+        if (playerAction == PlayerAction::MOVE_DOWN) { // You are touching the board or other placed pieces. So place the active piece.
             placeActivePiece(game);
             return;
         }
+        //If there was a collision revert the piece movement.
         movedPiece = game->activePiece;
     }
     
@@ -203,6 +205,7 @@ void draw(Game* game) {
     Shape queued;
     TetranimoShape nextPieceShape = game->upcomingPieces.front().shape;
     memcpy(queued, SHAPES[nextPieceShape], sizeof(queued));
+
     //NOTE: THIS IS FUCKING RETARDED.
     printf("Held Piece:\t\t Next Piece:\n");
     for (int i = 0; i < 4; i++) {
@@ -281,25 +284,31 @@ Tetranimo movePiece(Tetranimo piece, PieceDirection direction)
     return movedPiece;
 }
 
-
+/* Rotates a piece 90 degrees clockwise or anti-clockwise. Each piece has a list of coords on the board and a 'pivot value'.
+   To rotate we get the coordinated relative to the pivot and transform them by a rotation matrix. Then return a piece with the 
+   new rotated coordinates. */
 Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise) {
     Tetranimo rotatedPiece;
-    Point relativeToPivot[4];
-    Point* result = getPointsRelativeToPivot(piece.points, piece.pivot);
-    for (int i = 0; i < 4; i++) {
-        relativeToPivot[i] = result[i];
-    }
+    //Get the relative points to the pivot.
+    Point* relativeToPivot = getPointsRelativeToPivot(piece.points, piece.pivot);
     Point rotatedPoints[TETROMINO_POINTS];
+
+    //Generate the rotated points.
     for (int i = 0; i < TETROMINO_POINTS; i++) {
         Point rotatedPoint;
-        int vector[2] = { relativeToPivot[i].x, relativeToPivot[i].y };
+        int vector[2] = { relativeToPivot[i].x, relativeToPivot[i].y};
         int rotationMatrix[2][2];
         memcpy(rotationMatrix, clockwise ? ROTATION_MATRIX_90 : ROTATION_MATRIX_270, sizeof(rotationMatrix));
+        //TODO this might be bad? Might be using a pointer which isn't allocated on the heap!
         int* rotatedVector = matrixVectorProduct2(vector, rotationMatrix);
         rotatedPoint.x = rotatedVector[0] + piece.pivot.x;
         rotatedPoint.y = rotatedVector[1] + piece.pivot.y;
         rotatedPoints[i] = rotatedPoint;
     }
+
+    free(relativeToPivot);
+
+    //Now that you have the rotated points, create the 'rotated' piece and return it.
     memcpy(rotatedPiece.points, rotatedPoints, sizeof(rotatedPiece.points));
     rotatedPiece.shape = piece.shape;
     rotatedPiece.type = piece.type;
@@ -308,10 +317,12 @@ Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise) {
     return rotatedPiece;
 }
 
+/* Moves a piece as far down to bottom of the board as possible. Used for positioning the ghost pieces right now too!*/
 Tetranimo forcePieceDown(Tetranimo piece, Board board)
-{
+{   
+    //TODO: Since we know the dimensions of the board there might be a better way to do this?
     Tetranimo droppedPiece = piece;
-    while (!checkCollision(movePiece(droppedPiece, PieceDirection::DOWN).points,board)) {
+    while (!checkCollision(movePiece(droppedPiece, PieceDirection::DOWN).points,board)) { //If the piece being moved down would not cause a collision.
         droppedPiece = movePiece(droppedPiece, PieceDirection::DOWN);
     }
     return droppedPiece;
@@ -320,7 +331,7 @@ Tetranimo forcePieceDown(Tetranimo piece, Board board)
 
 void drawPiece(Tetranimo piece, Board board) {
     for (int i = 0; i < TETROMINO_POINTS; i++) {
-        board[piece.points[i].y][piece.points[i].x] = piece.type == Type::ACTIVE ? '#' : '~';
+        board[piece.points[i].y][piece.points[i].x] = piece.type == Type::ACTIVE ? '#' : '~'; // If its a ghost piece the symbol is '~'.
     }
 }
 
@@ -353,6 +364,7 @@ bool checkCollision(Point points[], Board board)
 Tetranimo spawnTetranimo() {
     int shapeIndex;
     srand((unsigned)time(NULL));
+    //TODO: use better random number generation!
     shapeIndex = rand() % 7;
     Tetranimo tetranimo;
     memcpy(tetranimo.points, STARTING_COORDS[shapeIndex], sizeof(tetranimo.points));
@@ -511,6 +523,8 @@ void holdPiece(Game* game)
     }
 }
 
+/*The game needs to automatically move the active piece down And place it if the player runs out of time to move it. 
+  This function moves the piece down if it needs to and updates the state of the gravity.*/
 void handleGravity(Game* game) {
     game->level = 1 + game->totalLinesCleared / 1;
     if (game->framesUntilNextDrop == 0) {
@@ -518,7 +532,6 @@ void handleGravity(Game* game) {
         //If you collided with something falling due to gravity, you ran out of time so the game should place the piece for you.
         if (checkCollision(droppedPiece.points, game->board)) {
             placeActivePiece(game);
-            //game->pieceIsActive = false;
         }
         else {
             game->activePiece = droppedPiece;
@@ -527,12 +540,15 @@ void handleGravity(Game* game) {
     }
     game->framesUntilNextDrop--;
 }
-
+/* A ghost piece is a indicator of where the piece would land if the player forced it down. 
+   This function keeps the ghost piece in the correct position relative to the active piece */
 void updateGhostPiece(Game* game) {
     Tetranimo updatedGhostPiece = game->activePiece;
     updatedGhostPiece = forcePieceDown(updatedGhostPiece, game->board);
     updatedGhostPiece.type = Type::GHOST;
     game->drawGhostPiece = true;
+
+    /*If any of the real active piece would cover the ghost piece, drawing the ghost piece is no longer useful!*/
     for (int i = 0; i < TETROMINO_POINTS; i++) {
         int activePieceY = game->activePiece.points[i].y;
         for (int j = 0; j < TETROMINO_POINTS; j++) {

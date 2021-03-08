@@ -173,7 +173,7 @@ void clearScreen();
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
     int pivot_x = pivot.x;
     int pivot_y = pivot.y;
-    Point relativePoints[TETROMINO_POINTS];
+    Point* relativePoints = (Point*)malloc(sizeof(Point)*TETROMINO_POINTS);
     for (int i = 0; i < TETROMINO_POINTS; i++) {
         Point relativePoint;
         relativePoint.x = points[i].x - pivot_x;
