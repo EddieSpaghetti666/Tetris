@@ -137,6 +137,7 @@ typedef enum class GameState {
 
 typedef struct {
     GameState state;
+    bool pieceCanBeHeld;
     bool pieceIsActive;
     bool drawGhostPiece;
     bool pieceIsHeld;
