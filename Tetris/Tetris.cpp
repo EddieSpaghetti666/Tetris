@@ -8,7 +8,11 @@
 
 int main() {
 
+<<<<<<< HEAD
     srand((unsigned)time(NULL));
+=======
+    //Test
+>>>>>>> parent of b94f1fe (test)
 
     struct timeb frameStart, frameEnd;
     ftime(&frameStart);
