@@ -6,13 +6,10 @@
 #include <windows.h> /* for GetAsyncKeyState */
 #include <conio.h>
 
-
-
-//This is a test again Im dumb. 
-
 int main() {
 
     srand((unsigned)time(NULL));
+
     struct timeb frameStart, frameEnd;
     ftime(&frameStart);
     int frameTimeDiff;
@@ -68,7 +65,6 @@ int main() {
 
     }
 
-    //Im testing here too
     teardown();
 
 
@@ -109,7 +105,6 @@ Game initialize() {
             }
         }
     }
-    int test = 2;
     return game;
 }
 
