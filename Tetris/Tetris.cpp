@@ -6,9 +6,10 @@
 #include <windows.h> /* for GetAsyncKeyState */
 #include <conio.h>
 
-int main() {
 
-    //Test
+//This is a test again Im dumb. 
+
+int main() {
 
     struct timeb frameStart, frameEnd;
     ftime(&frameStart);
@@ -65,6 +66,7 @@ int main() {
 
     }
 
+    //Im testing here too
     teardown();
 
 
@@ -104,6 +106,7 @@ Game initialize() {
             }
         }
     }
+    int test = 2;
     return game;
 }
 
