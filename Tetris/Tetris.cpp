@@ -6,16 +6,17 @@
 #include <windows.h> /* for GetAsyncKeyState */
 #include <conio.h>
 
-int main() {
 
-    srand((unsigned)time(NULL));
+//This is a test again Im dumb. 
+
+int main() {
 
     struct timeb frameStart, frameEnd;
     ftime(&frameStart);
     int frameTimeDiff;
 
     Game game = initialize();
-
+  
     PlayerAction playerAction = PlayerAction::IDLE;
 
 
@@ -65,6 +66,7 @@ int main() {
 
     }
 
+    //Im testing here too
     teardown();
 
 
@@ -83,7 +85,6 @@ Game initialize() {
     game.framesUntilNextDrop = INITIAL_GRAVITY;
     //This line is so that the held piece appears correctly as None instead of Line
     game.heldPiece.shape = EMPTY;
-    game.pieceCanBeHeld = true;
     std::queue<Tetranimo> pieceQueue;
     for (int i = 0; i < PIECE_QUEUE_SIZE; i++) {
         Tetranimo queuedPiece = spawnTetranimo();
@@ -105,6 +106,7 @@ Game initialize() {
             }
         }
     }
+    int test = 2;
     return game;
 }
 
@@ -149,7 +151,7 @@ void update(PlayerAction playerAction, Game* game) {
         return;
     }
     }
-
+    
     if (checkCollision(movedPiece.points, game->board)) {
         if (playerAction == PlayerAction::MOVE_DOWN) { // You are touching the board or other placed pieces. So place the active piece.
             placeActivePiece(game);
@@ -158,20 +160,20 @@ void update(PlayerAction playerAction, Game* game) {
         //If there was a collision revert the piece movement.
         movedPiece = game->activePiece;
     }
-
+    
 
     game->activePiece = movedPiece;
     handleGravity(game);
     updateGhostPiece(game);
-    if (game->pieceIsActive)
+    if(game->pieceIsActive)
         drawPiece(game->activePiece, game->board);
-    if (game->drawGhostPiece)
+    if(game->drawGhostPiece)
         drawPiece(game->ghostPiece, game->board);
 
 }
 
 void draw(Game* game) {
-
+    
     //system("cls");
     clearScreen();
     printf("Lines:%d\tLevel:%d\nSCORE:%d\n", game->totalLinesCleared, game->level, game->score);
@@ -212,18 +214,18 @@ void draw(Game* game) {
     //NOTE: THIS IS FUCKING RETARDED.
     printf("Held Piece:\t\t Next Piece:\n");
     for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            printf("%c", held[i][j]);
-        }
-        printf("            \t\t");
-        for (int k = 0; k < 4; k++) {
-            printf("%c", queued[i][k]);
+       for (int j = 0; j < 4; j++) {
+          printf("%c", held[i][j]);
+       }
+       printf("            \t\t");
+       for (int k = 0; k < 4; k++) {
+           printf("%c", queued[i][k]);
 
-        }
-        printf("\n");
+       }
+    printf("\n");
     }
-
-
+    
+    
 
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -233,7 +235,7 @@ void draw(Game* game) {
     }
 
 
-
+    
 }
 
 void teardown() {
@@ -288,7 +290,7 @@ Tetranimo movePiece(Tetranimo piece, PieceDirection direction)
 }
 
 /* Rotates a piece 90 degrees clockwise or anti-clockwise. Each piece has a list of coords on the board and a 'pivot value'.
-   To rotate we get the coordinated relative to the pivot and transform them by a rotation matrix. Then return a piece with the
+   To rotate we get the coordinated relative to the pivot and transform them by a rotation matrix. Then return a piece with the 
    new rotated coordinates. */
 Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise) {
     Tetranimo rotatedPiece;
@@ -299,7 +301,7 @@ Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise) {
     //Generate the rotated points.
     for (int i = 0; i < TETROMINO_POINTS; i++) {
         Point rotatedPoint;
-        int vector[2] = { relativeToPivot[i].x, relativeToPivot[i].y };
+        int vector[2] = { relativeToPivot[i].x, relativeToPivot[i].y};
         int rotationMatrix[2][2];
         memcpy(rotationMatrix, clockwise ? ROTATION_MATRIX_90 : ROTATION_MATRIX_270, sizeof(rotationMatrix));
         //TODO this might be bad? Might be using a pointer which isn't allocated on the heap!
@@ -316,16 +318,16 @@ Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise) {
     rotatedPiece.shape = piece.shape;
     rotatedPiece.type = piece.type;
     rotatedPiece.pivot = rotatedPoints[1];
-
+    
     return rotatedPiece;
 }
 
 /* Moves a piece as far down to bottom of the board as possible. Used for positioning the ghost pieces right now too!*/
 Tetranimo forcePieceDown(Tetranimo piece, Board board)
-{
+{   
     //TODO: Since we know the dimensions of the board there might be a better way to do this?
     Tetranimo droppedPiece = piece;
-    while (!checkCollision(movePiece(droppedPiece, PieceDirection::DOWN).points, board)) { //If the piece being moved down would not cause a collision.
+    while (!checkCollision(movePiece(droppedPiece, PieceDirection::DOWN).points,board)) { //If the piece being moved down would not cause a collision.
         droppedPiece = movePiece(droppedPiece, PieceDirection::DOWN);
     }
     return droppedPiece;
@@ -366,6 +368,7 @@ bool checkCollision(Point points[], Board board)
 
 Tetranimo spawnTetranimo() {
     int shapeIndex;
+    srand((unsigned)time(NULL));
     //TODO: use better random number generation!
     shapeIndex = rand() % 7;
     Tetranimo tetranimo;
@@ -395,7 +398,6 @@ void placeActivePiece(Game* game)
     //You placed the current piece so set the piece active flag off.
     game->pieceIsActive = false;
     sweepBoard(game);
-    game->pieceCanBeHeld = true;
 }
 
 /* scanCompleteRow: Scans the entire board, and if it finds a
@@ -488,7 +490,7 @@ void holdPiece(Game* game)
     Tetranimo temp;
 
     //If there isn't a piece already held
-    if (game->pieceIsHeld == FALSE && game->pieceCanBeHeld)
+    if (game->pieceIsHeld == FALSE)
     {
         // set the heldPiece to activePiece;
         game->heldPiece = game->activePiece;
@@ -499,12 +501,10 @@ void holdPiece(Game* game)
         game->pieceIsActive = FALSE;
 
         game->pieceIsHeld = TRUE;
-
-        game->pieceCanBeHeld = false;
     }
 
     //If a piece is held already
-    else if (game->pieceIsHeld == TRUE && game->pieceCanBeHeld)
+    else if (game->pieceIsHeld == TRUE)
     {
         //erase the activePiece
         eraseActivePiece(&game->activePiece, game->board);
@@ -525,12 +525,10 @@ void holdPiece(Game* game)
 
         drawPiece(game->activePiece, game->board);
 
-        game->pieceCanBeHeld = false;
-
     }
 }
 
-/*The game needs to automatically move the active piece down And place it if the player runs out of time to move it.
+/*The game needs to automatically move the active piece down And place it if the player runs out of time to move it. 
   This function moves the piece down if it needs to and updates the state of the gravity.*/
 void handleGravity(Game* game) {
     game->level = 1 + game->totalLinesCleared / 1;
@@ -547,7 +545,7 @@ void handleGravity(Game* game) {
     }
     game->framesUntilNextDrop--;
 }
-/* A ghost piece is a indicator of where the piece would land if the player forced it down.
+/* A ghost piece is a indicator of where the piece would land if the player forced it down. 
    This function keeps the ghost piece in the correct position relative to the active piece */
 void updateGhostPiece(Game* game) {
     Tetranimo updatedGhostPiece = game->activePiece;
@@ -574,4 +572,5 @@ void clearScreen() {
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 
 }
+
 
