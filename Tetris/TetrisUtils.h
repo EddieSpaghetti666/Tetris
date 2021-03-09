@@ -10,8 +10,6 @@ static const int TETRAMINO_STARTING_XPOS = 5;
 static const int INITIAL_GRAVITY = 15;
 static const int PIECE_QUEUE_SIZE = 3;
 
-#define bool char
-
 typedef char Shape[4][4];
 
 typedef struct {

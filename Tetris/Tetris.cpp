@@ -5,21 +5,23 @@
 #include <windows.h> /* for GetAsyncKeyState */
 #include <conio.h>
 #include <SDL.h>
+#include <SDL_image.h>
+#include <string>
+#include "Texture.h"
 
 
 bool initGfx();
-bool loadMedia();
+bool loadMedia(Texture* texture);
 void close();
 
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 300; //This it the dimension of the board. this is a hack for now.
+const int SCREEN_HEIGHT = 575;
 
-SDL_Window* gWindow;
+SDL_Window* gWindow = NULL;
 
-SDL_Surface* gScreenSurface = NULL;
+SDL_Renderer* gRenderer = NULL;
 
-SDL_Surface* gHelloWorld = NULL;
  
 
 int main(int argc, char* argv[]) {
@@ -40,8 +42,9 @@ int main(int argc, char* argv[]) {
     }
     else
     {
+        Texture boardTexture(gRenderer);
         //Load media
-        if (!loadMedia())
+        if (!loadMedia(&boardTexture))
         {
             printf("Failed to load media!\n");
         }
@@ -115,16 +118,24 @@ int main(int argc, char* argv[]) {
                     playerAction = PlayerAction::IDLE;
                 }
 
-                //Apply the image
-                SDL_BlitSurface(gHelloWorld, NULL, gScreenSurface, NULL);
+                //Clear screen
+                SDL_RenderClear(gRenderer);
 
-                //Update the surface
-                SDL_UpdateWindowSurface(gWindow);
+                boardTexture.getWidth();
+
+                //Render texture to screen
+                boardTexture.render(0, 0, 0);
+
+                //Update screen
+                SDL_RenderPresent(gRenderer);
+
             }
+            boardTexture.free();
         }
     }
 
     teardown();
+    
 
     return 0;
 
@@ -143,8 +154,14 @@ bool initGfx()
     }
     else
     {
+        //Set texture filtering to linear
+        if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
+        {
+            printf("Warning: Linear texture filtering not enabled!");
+        }
+
         //Create window
-        gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        gWindow = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         if (gWindow == NULL)
         {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -152,24 +169,43 @@ bool initGfx()
         }
         else
         {
-            //Get window surface
-            gScreenSurface = SDL_GetWindowSurface(gWindow);
+            //Create renderer for window
+            gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+            if (gRenderer == NULL)
+            {
+                printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+                success = false;
+            }
+            else
+            {
+                
+
+                //Initialize renderer color
+                SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+                //Initialize PNG loading
+                int imgFlags = IMG_INIT_PNG;
+                if (!(IMG_Init(imgFlags) & imgFlags))
+                {
+                    printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+                    success = false;
+                }
+            }
         }
     }
 
     return success;
 }
 
-bool loadMedia()
+bool loadMedia(Texture* texture1)
 {
     //Loading success flag
     bool success = true;
 
-    //Load splash image
-    gHelloWorld = SDL_LoadBMP("hello_world.bmp");
-    if (gHelloWorld == NULL)
+    //Load sprite sheet texture
+    if (!texture1->loadFromFile("Tetris_Board.png"))
     {
-        printf("Unable to load image %s! SDL Error: %s\n", "hello_world.bmp", SDL_GetError());
+        printf("Failed to load sprite sheet texture!\n");
         success = false;
     }
 
@@ -178,17 +214,20 @@ bool loadMedia()
 
 void close()
 {
-    //Deallocate surface
-    SDL_FreeSurface(gHelloWorld);
-    gHelloWorld = NULL;
+   
+    
 
-    //Destroy window
+    //Destroy window	
+    SDL_DestroyRenderer(gRenderer);
     SDL_DestroyWindow(gWindow);
     gWindow = NULL;
+    gRenderer = NULL;
 
     //Quit SDL subsystems
+    IMG_Quit();
     SDL_Quit();
 }
+
 
 /*This function initializes the necissary Game state and Board. */
 Game initialize() {
@@ -376,11 +415,11 @@ void draw(Game* game) {
 void teardown() {
 
     //Free resources and close SDL
-    close();
+    
 
-    for (int i = 0; i < 20; i++) {
+    /*for (int i = 0; i < 20; i++) {
         printf("\n\n\n\n\n");
-    }
+    }*/
     //clearScreen();
     printf("GAME_OVER!");
 }
