@@ -8,6 +8,8 @@
 
 int main() {
 
+    //Test
+
     struct timeb frameStart, frameEnd;
     ftime(&frameStart);
     int frameTimeDiff;
