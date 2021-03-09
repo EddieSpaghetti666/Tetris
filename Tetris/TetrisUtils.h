@@ -140,7 +140,6 @@ typedef struct {
     bool pieceIsActive;
     bool drawGhostPiece;
     bool pieceIsHeld;
-    bool pieceCanBeHeld;
     int level;
     Board board;
     int score;
@@ -174,7 +173,7 @@ void clearScreen();
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
     int pivot_x = pivot.x;
     int pivot_y = pivot.y;
-    Point* relativePoints = (Point*)malloc(sizeof(Point) * TETROMINO_POINTS);
+    Point* relativePoints = (Point*)malloc(sizeof(Point)*TETROMINO_POINTS);
     for (int i = 0; i < TETROMINO_POINTS; i++) {
         Point relativePoint;
         relativePoint.x = points[i].x - pivot_x;
@@ -200,3 +199,5 @@ int* matrixVectorProduct2(int vector[2], int matrix[2][2]) {
     }
     return result;
 }
+
+
