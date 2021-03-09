@@ -11,6 +11,8 @@
 
 int main() {
 
+    srand((unsigned)time(NULL));
+
     struct timeb frameStart, frameEnd;
     ftime(&frameStart);
     int frameTimeDiff;
@@ -368,7 +370,6 @@ bool checkCollision(Point points[], Board board)
 
 Tetranimo spawnTetranimo() {
     int shapeIndex;
-    srand((unsigned)time(NULL));
     //TODO: use better random number generation!
     shapeIndex = rand() % 7;
     Tetranimo tetranimo;
