@@ -11,6 +11,7 @@ bool initGfx();
 bool loadMedia();
 void close();
 
+
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
@@ -22,6 +23,15 @@ SDL_Surface* gHelloWorld = NULL;
  
 
 int main(int argc, char* argv[]) {
+
+    Game game = initialize();
+    PlayerAction playerAction = PlayerAction::IDLE;
+
+    struct timeb frameStart, frameEnd;
+    ftime(&frameStart);
+    int frameTimeDiff;
+
+    srand((unsigned)time(NULL));
 
     //Start up SDL and create window
     if (!initGfx())
@@ -37,79 +47,83 @@ int main(int argc, char* argv[]) {
         }
         else
         {
-            //Apply the image
-            SDL_BlitSurface(gHelloWorld, NULL, gScreenSurface, NULL);
 
-            //Update the surface
-            SDL_UpdateWindowSurface(gWindow);
+            SDL_Event event;
 
-            //Wait two seconds
-            SDL_Delay(2000);
-        }
-    }
+            while (game.state != GameState::OVER) {
 
-    //Free resources and close SDL
-    close();
+                //Handle events on queue
+                while (SDL_PollEvent(&event) != 0)
+                {
+                    //User requests quit
+                    if (event.type == SDL_QUIT)
+                    {
+                        game.state = GameState::OVER;
+                    }
+                    else if (event.type == SDL_KEYDOWN) {
+                        switch (event.key.keysym.sym)
+                        {
+                        case SDLK_ESCAPE:
+                            playerAction = PlayerAction::QUIT;
+                            break;
+                       
+                        case SDLK_DOWN:
+                            playerAction = PlayerAction::MOVE_DOWN;
+                            break;
 
+                        case SDLK_LEFT:
+                            playerAction = PlayerAction::MOVE_LEFT;
+                            break;
 
-    srand((unsigned)time(NULL));
+                        case SDLK_RIGHT:
+                            playerAction = PlayerAction::MOVE_RIGHT;
+                            break;
 
-    struct timeb frameStart, frameEnd;
-    ftime(&frameStart);
-    int frameTimeDiff;
+                        
+                        case SDLK_UP:
+                            playerAction = PlayerAction::ROTATE_RIGHT;
+                            break;
 
-    Game game = initialize();
-  
-    PlayerAction playerAction = PlayerAction::IDLE;
+                        case SDLK_z: 
+                            playerAction = PlayerAction::ROTATE_LEFT;
+                            break;
 
+                        case SDLK_SPACE: 
+                            playerAction = PlayerAction::FORCE_DOWN;
+                            break;
 
-    /* Game Loop */
-    while (game.state != GameState::OVER) {
+                        case SDLK_c: 
+                            playerAction = PlayerAction::HOLD;
+                            break;
+                        
+                        default:
+                            
+                            break;
+                        }
+                    }
+                }
 
-        ftime(&frameEnd);
-        frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
+                ftime(&frameEnd);
+                frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
 
-        if (int input = GetAsyncKeyState(VK_ESCAPE) & (1 << 15) != 0)
-            playerAction = PlayerAction::QUIT;
-        else if (int input = GetAsyncKeyState(VK_LEFT) & (1 << 15) != 0)
-            playerAction = PlayerAction::MOVE_LEFT;
-        else if (int input = GetAsyncKeyState(VK_RIGHT) & (1 << 15) != 0)
-            playerAction = PlayerAction::MOVE_RIGHT;
-        else if (int input = GetAsyncKeyState(VK_DOWN) & (1 << 15) != 0)
-            playerAction = PlayerAction::MOVE_DOWN;
-        else if (int input = GetAsyncKeyState(VK_UP) & (1 << 15) != 0)
-            playerAction = PlayerAction::ROTATE_RIGHT;
-        else if (int input = GetAsyncKeyState(Z_KEY) & (1 << 15) != 0)
-            playerAction = PlayerAction::ROTATE_LEFT;
-        else if (int input = GetAsyncKeyState(VK_SPACE) & (1 << 15) != 0)
-            playerAction = PlayerAction::FORCE_DOWN;
-        else if (int input = GetAsyncKeyState(C_KEY) & (1 << 15) != 0)
-            playerAction = PlayerAction::HOLD;
+                //TODO: Should this be handled in update instead?
+                if (frameTimeDiff > FRAME_RATE) {
+                
+                    update(playerAction, &game);
+                    draw(&game);
+                    ftime(&frameStart);
+                    playerAction = PlayerAction::IDLE;
+                }
 
-        //TODO: Should this be handled in update instead?
-        if (frameTimeDiff > FRAME_RATE) {
-            if (!game.pieceIsActive) {
-                game.activePiece = game.upcomingPieces.front();
-                game.upcomingPieces.pop();
-                Tetranimo nextQueuedPiece = spawnTetranimo();
-                nextQueuedPiece.type == Type::QUEUED;
-                game.upcomingPieces.push(nextQueuedPiece);
-                spawnActivePiece(&game);
-                game.activePiece.type = Type::ACTIVE;
-                game.pieceIsActive = true;
-                updateGhostPiece(&game);
-                playerAction = PlayerAction::IDLE;
+                //Apply the image
+                SDL_BlitSurface(gHelloWorld, NULL, gScreenSurface, NULL);
+
+                //Update the surface
+                SDL_UpdateWindowSurface(gWindow);
             }
-            update(playerAction, &game);
-            draw(&game);
-            ftime(&frameStart);
-            playerAction = PlayerAction::IDLE;
         }
-
-
     }
 
-    //Im testing here too
     teardown();
 
     return 0;
@@ -216,7 +230,25 @@ Game initialize() {
 
 //TODO: Seperate update into smaller more sensible functions?
 void update(PlayerAction playerAction, Game* game) {
+
+    if (!game->pieceIsActive) {
+        game->activePiece = game->upcomingPieces.front();
+        game->upcomingPieces.pop();
+        Tetranimo nextQueuedPiece = spawnTetranimo();
+        nextQueuedPiece.type == Type::QUEUED;
+        game->upcomingPieces.push(nextQueuedPiece);
+        spawnActivePiece(game);
+        game->activePiece.type = Type::ACTIVE;
+        game->pieceIsActive = true;
+        updateGhostPiece(game);
+        playerAction = PlayerAction::IDLE;
+    }
+
     void holdPiece(Game * game);
+
+    
+   
+
     eraseActivePiece(&game->activePiece, game->board);
     eraseActivePiece(&game->ghostPiece, game->board);
     Tetranimo movedPiece = game->activePiece;
@@ -282,7 +314,6 @@ void draw(Game* game) {
     clearScreen();
     printf("Lines:%d\tLevel:%d\nSCORE:%d\n", game->totalLinesCleared, game->level, game->score);
 
-    /*TODO: THIS SECTION IS FOR THE HELD PIECE. MOVE THIS OUT TO A SEPERATE FUNCTION? */
     Shape held;
     switch (game->heldPiece.shape)
     {
@@ -343,6 +374,10 @@ void draw(Game* game) {
 }
 
 void teardown() {
+
+    //Free resources and close SDL
+    close();
+
     for (int i = 0; i < 20; i++) {
         printf("\n\n\n\n\n");
     }
