@@ -1,14 +1,13 @@
 #include "Texture.h"
 #include <SDL_image.h>
 
-Texture::Texture(SDL_Renderer* renderer)
+Texture::Texture()
 {
 	//Initialize
 	mTexture = NULL;
 	mWidth = 0;
 	mHeight = 0;
-	this->renderer = renderer;
-
+	
 }
 
 Texture::~Texture()
@@ -18,7 +17,7 @@ Texture::~Texture()
 }
 
 
-bool Texture::loadFromFile(std::string path)
+bool Texture::loadFromFile(SDL_Renderer* renderer, std::string path)
 {
 	//Get rid of preexisting texture
 	free();
@@ -71,7 +70,7 @@ void Texture::free()
 	}
 }
 
-void Texture::render(int x, int y, SDL_Rect* clip)
+void Texture::render(SDL_Renderer* renderer, int x, int y, SDL_Rect* clip)
 {
 	//Set rendering space and render to screen
 	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
@@ -84,7 +83,9 @@ void Texture::render(int x, int y, SDL_Rect* clip)
 	}
 
 	//Render to screen
-	SDL_RenderCopy(renderer, mTexture, clip, &renderQuad);
+	if (SDL_RenderCopy(renderer, mTexture, clip, &renderQuad) != 0) {
+		printf("%s", SDL_GetError());
+	}
 }
 
 int Texture::getWidth()

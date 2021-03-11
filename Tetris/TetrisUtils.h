@@ -1,5 +1,6 @@
 #pragma once
 #include <queue>;
+#include "Texture.h"
 static const int FRAME_RATE = 1000 / 30;
 static const int BOARD_WIDTH = 12;
 static const int BOARD_HEIGHT = 21;
@@ -9,6 +10,8 @@ static const short C_KEY = 0x43;
 static const int TETRAMINO_STARTING_XPOS = 5;
 static const int INITIAL_GRAVITY = 15;
 static const int PIECE_QUEUE_SIZE = 3;
+
+
 
 typedef char Shape[4][4];
 
@@ -102,6 +105,7 @@ typedef enum TetranimoShape {
 
 typedef struct
 {
+    SDL_Rect spritePos;
     TetranimoShape shape;
     Type type;
     Point points[TETROMINO_POINTS];
