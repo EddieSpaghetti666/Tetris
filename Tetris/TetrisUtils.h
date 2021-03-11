@@ -110,6 +110,7 @@ typedef struct
     Type type;
     Point points[TETROMINO_POINTS];
     Point pivot;
+    int sprite;
 
 } Tetranimo;
 
