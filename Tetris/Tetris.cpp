@@ -10,8 +10,15 @@
 #include "Texture.h"
 
 
-const int SCREEN_WIDTH = 300; //This it the dimension of the board. this is a hack for now.
-const int SCREEN_HEIGHT = 575;
+const int SCREEN_WIDTH = 953; //These are the dimensions of the BG texture. This is a hack for now.
+const int SCREEN_HEIGHT = 565;
+
+const int SQUARE_PIXEL_SIZE = 16;
+
+const int BOARD_PIXEL_WIDTH = BOARD_WIDTH * SQUARE_PIXEL_SIZE;
+const int BOARD_PIXEL_HEIGHT = BOARD_HEIGHT * SQUARE_PIXEL_SIZE;
+
+const SDL_Rect boardViewPort = { (SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2, BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT }; //This centers the board.
 
 //Starts up SDL and creates a window
 bool initGfx();
@@ -45,6 +52,7 @@ int main(int argc, char* argv[]) {
 	{
 		Texture boardTile(gRenderer);
 		Texture spriteSheet(gRenderer);
+		Texture background(gRenderer);
 
 		//TODO: MOVE TO A FUNCTION. CANT MOVE TO HEADER B/C TEXTURE NEEDS RENDERER
 		//Sprite Rectangles
@@ -97,6 +105,10 @@ int main(int argc, char* argv[]) {
 			printf("Failed to load media! Tetris Board\n");
 		}
 		if (!spriteSheet.loadFromFile("Tetris_Sprites.png"))
+		{
+			printf("Failed to load media! Tetris Board\n");
+		}
+		if (!background.loadFromFile("Tetris_BG.jpg"))
 		{
 			printf("Failed to load media! Tetris Board\n");
 		}
@@ -170,14 +182,19 @@ int main(int argc, char* argv[]) {
 
 				//Clear screen
 				SDL_RenderClear(gRenderer);
+				SDL_RenderSetViewport(gRenderer, 0);
 
+				background.render(0, 0, 0, 0.5);
+
+
+				SDL_RenderSetViewport(gRenderer, &boardViewPort);
 				//TODO do this is drawBoard                
 				for (int i = 0; i < BOARD_HEIGHT; i++) {
 					for (int j = 0; j < BOARD_WIDTH; j++) {
 						if (game.board[i][j].occupyingPiece == TetranimoType::EMPTY)
-							boardTile.render((j * 16), (i * 16), 0);
+							boardTile.render((j * SQUARE_PIXEL_SIZE), (i * SQUARE_PIXEL_SIZE), 0);
 						else
-							spriteSheet.render((j * 16), (i * 16), &spriteClips[game.board[i][j].occupyingPiece]);
+							spriteSheet.render((j * SQUARE_PIXEL_SIZE), (i * SQUARE_PIXEL_SIZE), &spriteClips[game.board[i][j].occupyingPiece]);
 
 					}
 				}

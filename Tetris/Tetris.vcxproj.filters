@@ -31,10 +31,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Tetris_Sprite_Sheet.png">
+    <Image Include="Board_Tile.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="Board_Tile.png">
+    <Image Include="Tetris_BG.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Tetris_Sprites.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
