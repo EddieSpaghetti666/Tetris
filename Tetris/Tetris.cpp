@@ -620,7 +620,7 @@ void placeActivePiece(Game* game)
 /* scanCompleteRow: Scans the entire board, and if it finds a
    completed row of '*'s it keeps track of it in an array of ints
    pointed to by *rows */
-int* scanCompletedRow(Board board) {
+int* scanCompletedRow(Game* game) {
     static int rows[4];
     int rowIndex = 0;
     int i, j, k;
@@ -629,7 +629,7 @@ int* scanCompletedRow(Board board) {
     {
         for (i = 0, k = 0; i < BOARD_WIDTH; i++)
         {
-            if (board[j][i].occupyingPiece != TetranimoType::EMPTY)
+            if (game->board[j][i].occupyingPiece != TetranimoType::EMPTY)
                 k++;
 
         }
@@ -661,7 +661,7 @@ void sweepBoard(Game* game)
 
     int* rowCheck;
     int i;
-    for (i = 0, (rowCheck = scanCompletedRow(game->board)); i < 4 && *rowCheck > 0; i++, rowCheck++)
+    for (i = 0, (rowCheck = scanCompletedRow(game)); i < 4 && *rowCheck > 0; i++, rowCheck++)
     {
         breakCompletedRow(game, *rowCheck);
         rowsBroken++;
