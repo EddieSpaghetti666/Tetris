@@ -8,7 +8,7 @@ static const int TETROMINO_POINTS = 4;
 static const short Z_KEY = 0x5A;
 static const short C_KEY = 0x43;
 static const int TETRAMINO_STARTING_XPOS = 5;
-static const int INITIAL_GRAVITY = 15;
+static const int INITIAL_GRAVITY = 25;
 static const int PIECE_QUEUE_SIZE = 3;
 
 
@@ -165,19 +165,21 @@ void update(PlayerAction, Game*);
 void draw(Game*);
 void teardown();
 void drawPiece(Tetranimo, Board);
-void eraseActivePiece(Tetranimo*, Board);
+void erasePiece(Tetranimo*, Board);
 bool checkCollision(Point[], Board);
 void placeActivePiece(Game*);
 void sweepBoard(Game*);
 void spawnActivePiece(Game*);
 Tetranimo movePiece(Tetranimo, PieceDirection);
-Tetranimo rotatePiece(Tetranimo, Board, bool);
+Tetranimo rotatePiece(Tetranimo, bool);
 Tetranimo forcePieceDown(Tetranimo, Board);
-void dropRows(Game*, int, int);
+void dropRow(Game*, int);
 void handleGravity(Game*);
 void updateGhostPiece(Game*);
 Tetranimo spawnTetranimo();
 void clearScreen();
+bool rowCompleted(Board board, int row);
+Tetranimo adjustRotatedPiece(Tetranimo, Board, bool);
 
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
     int pivot_x = pivot.x;
