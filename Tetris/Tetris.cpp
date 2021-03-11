@@ -10,19 +10,20 @@
 #include "Texture.h"
 
 
-bool initGfx();
-bool loadMedia(Texture* texture);
-void close();
-
-
 const int SCREEN_WIDTH = 300; //This it the dimension of the board. this is a hack for now.
 const int SCREEN_HEIGHT = 575;
 
-SDL_Window* gWindow = NULL;
+//Starts up SDL and creates a window
+bool initGfx();
+//bool loadMedia(Texture* texture);
+//Frees media and shuts down SDL
+void close();
 
+SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 
- 
+//Sprites
+SDL_Rect spriteClips[7];
 
 int main(int argc, char* argv[]) {
 
@@ -42,11 +43,62 @@ int main(int argc, char* argv[]) {
     }
     else
     {
-        Texture boardTexture(gRenderer);
+        Texture boardTile(gRenderer);
+        Texture spriteSheet(gRenderer);
+        
+        //TODO: MOVE TO A FUNCTION. CANT MOVE TO HEADER B/C TEXTURE NEEDS RENDERER
+        //Sprite Rectangles
+        
+        /* Line */
+        spriteClips[0].x = 0;
+        spriteClips[0].y = 250;
+        spriteClips[0].w = 16;
+        spriteClips[0].h = 16;
+
+        /* Square */
+        spriteClips[1].x = 150;
+        spriteClips[1].y = 300;
+        spriteClips[1].w = 16;
+        spriteClips[1].h = 16;
+
+        /* J */
+        spriteClips[2].x = 10;
+        spriteClips[2].y = 130;
+        spriteClips[2].w = 16;
+        spriteClips[2].h = 16;
+
+        /* L */
+        spriteClips[3].x = 10;
+        spriteClips[3].y = 180;
+        spriteClips[3].w = 16;
+        spriteClips[3].h = 16;
+
+        /* S */
+        spriteClips[4].x = 140;
+        spriteClips[4].y = 240;
+        spriteClips[4].w = 16;
+        spriteClips[4].h = 16;
+
+        /* T */
+        spriteClips[5].x = 10;
+        spriteClips[5].y = 65;
+        spriteClips[5].w = 16;
+        spriteClips[5].h = 16;
+
+        /* Z */
+        spriteClips[6].x = 10;
+        spriteClips[6].y = 320;
+        spriteClips[6].w = 16;
+        spriteClips[6].h = 16;
+
         //Load media
-        if (!loadMedia(&boardTexture))
+        if (!boardTile.loadFromFile("Board_Tile.png"))
         {
-            printf("Failed to load media!\n");
+            printf("Failed to load media! Tetris Board\n");
+        }
+        if (!spriteSheet.loadFromFile("Tetris_Sprites.png"))
+        {
+            printf("Failed to load media! Tetris Board\n");
         }
         else
         {
@@ -54,7 +106,6 @@ int main(int argc, char* argv[]) {
             SDL_Event event;
 
             while (game.state != GameState::OVER) {
-
                 //Handle events on queue
                 while (SDL_PollEvent(&event) != 0)
                 {
@@ -118,19 +169,30 @@ int main(int argc, char* argv[]) {
                     playerAction = PlayerAction::IDLE;
                 }
 
+
                 //Clear screen
                 SDL_RenderClear(gRenderer);
+                
+                //TODO do this is drawBoard                
+                for (int i = 0; i < BOARD_HEIGHT; i++) {
+                    for (int j = 0; j < BOARD_WIDTH; j++) {
+                        if(game.board[i][j] == '.')
+                            boardTile.render((j * 16), (i * 16), 0);
+                        else if(game.board[i][j] == '#')
+                            spriteSheet.render((j * 16), (i * 16), &spriteClips[game.activePiece.sprite]);
+                            
+                    }
+                }
 
-                boardTexture.getWidth();
-
-                //Render texture to screen
-                boardTexture.render(0, 0, 0);
 
                 //Update screen
                 SDL_RenderPresent(gRenderer);
 
             }
-            boardTexture.free();
+            //TODO Free somewhere else?
+            boardTile.free();
+
+            spriteSheet.free();
         }
     }
 
@@ -196,22 +258,6 @@ bool initGfx()
 
     return success;
 }
-
-bool loadMedia(Texture* texture1)
-{
-    //Loading success flag
-    bool success = true;
-
-    //Load sprite sheet texture
-    if (!texture1->loadFromFile("Tetris_Board.png"))
-    {
-        printf("Failed to load sprite sheet texture!\n");
-        success = false;
-    }
-
-    return success;
-}
-
 void close()
 {
    
@@ -464,6 +510,7 @@ Tetranimo movePiece(Tetranimo piece, PieceDirection direction)
     movedPiece.pivot = newCoords[1];
     movedPiece.shape = piece.shape;
     movedPiece.type = piece.type;
+    movedPiece.sprite = piece.sprite;
     return movedPiece;
 }
 
@@ -546,12 +593,12 @@ bool checkCollision(Point points[], Board board)
 
 Tetranimo spawnTetranimo() {
     int shapeIndex;
-    //TODO: use better random number generation!
     shapeIndex = rand() % 7;
     Tetranimo tetranimo;
     memcpy(tetranimo.points, STARTING_COORDS[shapeIndex], sizeof(tetranimo.points));
     tetranimo.pivot = tetranimo.points[1];
     tetranimo.shape = (TetranimoShape)shapeIndex;
+    tetranimo.sprite = shapeIndex;
 
     return tetranimo;
 
@@ -748,6 +795,11 @@ void clearScreen() {
     coord.Y = 0;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 
+}
+
+/* drawBoard: Renders the appropraite textures to the SDL Window based on the current state of the board */
+void drawBoard(Game* game)
+{
 }
 
 
