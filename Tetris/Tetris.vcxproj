@@ -158,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Tetris_Board.png" />
+    <Image Include="Tetris_Sprite_Sheet.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

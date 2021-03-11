@@ -34,5 +34,8 @@
     <Image Include="Tetris_Board.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Tetris_Sprite_Sheet.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
