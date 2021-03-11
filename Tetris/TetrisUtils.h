@@ -2,8 +2,8 @@
 #include <queue>;
 #include "Texture.h"
 static const int FRAME_RATE = 1000 / 30;
-static const int BOARD_WIDTH = 12;
-static const int BOARD_HEIGHT = 21;
+static const int BOARD_WIDTH = 10;
+static const int BOARD_HEIGHT = 20;
 static const int TETROMINO_POINTS = 4;
 static const short Z_KEY = 0x5A;
 static const short C_KEY = 0x43;
@@ -19,6 +19,25 @@ typedef struct {
     int x;
     int y;
 } Point;
+
+typedef enum TetranimoType {
+    LINE,
+    SQUARE,
+    J,
+    L,
+    S,
+    T,
+    Z,
+    EMPTY
+};
+
+typedef struct Square {
+    char oldBoardImg;
+    TetranimoType occupyingPiece;
+};
+
+typedef Square Board[BOARD_HEIGHT][BOARD_WIDTH];
+
 
 typedef Point StartingPos[4];
 
@@ -83,31 +102,18 @@ static const int ROTATION_MATRIX_90[2][2] = { 0, -1,
 static const int ROTATION_MATRIX_270[2][2] = { 0, 1,
                                               -1, 0 };
 
-
-typedef char Board[BOARD_HEIGHT][BOARD_WIDTH];
-
-typedef enum class Type {
+typedef enum class TetranimoState {
     ACTIVE,
     GHOST,
     QUEUED
 };
 
-typedef enum TetranimoShape {
-    LINE,
-    SQUARE,
-    J,
-    L,
-    S,
-    T,
-    Z,
-    EMPTY
-};
 
 typedef struct
 {
     SDL_Rect spritePos;
-    TetranimoShape shape;
-    Type type;
+    TetranimoType type;
+    TetranimoState state;
     Point points[TETROMINO_POINTS];
     Point pivot;
     int sprite;
