@@ -50,44 +50,44 @@ int main(int argc, char* argv[]) {
 		//Sprite Rectangles
 
 		/* Line */
-		spriteClips[0].x = 0;
-		spriteClips[0].y = 250;
+		spriteClips[0].x = 1;
+		spriteClips[0].y = 249;
 		spriteClips[0].w = 16;
 		spriteClips[0].h = 16;
 
 		/* Square */
-		spriteClips[1].x = 150;
-		spriteClips[1].y = 300;
+		spriteClips[1].x = 145;
+		spriteClips[1].y = 305;
 		spriteClips[1].w = 16;
 		spriteClips[1].h = 16;
 
 		/* J */
-		spriteClips[2].x = 10;
-		spriteClips[2].y = 130;
+		spriteClips[2].x = 9;
+		spriteClips[2].y = 177;
 		spriteClips[2].w = 16;
 		spriteClips[2].h = 16;
 
 		/* L */
-		spriteClips[3].x = 10;
-		spriteClips[3].y = 180;
+		spriteClips[3].x = 9;
+		spriteClips[3].y = 129;
 		spriteClips[3].w = 16;
 		spriteClips[3].h = 16;
 
 		/* S */
-		spriteClips[4].x = 140;
-		spriteClips[4].y = 240;
+		spriteClips[4].x = 25;
+		spriteClips[4].y = 305;
 		spriteClips[4].w = 16;
 		spriteClips[4].h = 16;
 
 		/* T */
-		spriteClips[5].x = 10;
+		spriteClips[5].x = 9;
 		spriteClips[5].y = 65;
 		spriteClips[5].w = 16;
 		spriteClips[5].h = 16;
 
 		/* Z */
-		spriteClips[6].x = 10;
-		spriteClips[6].y = 320;
+		spriteClips[6].x = 153;
+		spriteClips[6].y = 241;
 		spriteClips[6].w = 16;
 		spriteClips[6].h = 16;
 
