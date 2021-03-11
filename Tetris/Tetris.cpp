@@ -543,6 +543,7 @@ Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise) {
     rotatedPiece.shape = piece.shape;
     rotatedPiece.type = piece.type;
     rotatedPiece.pivot = rotatedPoints[1];
+    rotatedPiece.sprite = piece.sprite;
     
     return rotatedPiece;
 }
