@@ -27,14 +27,15 @@ SDL_Rect spriteClips[7];
 
 int main(int argc, char* argv[]) {
 
+    
+    srand((unsigned)time(NULL));
+
     Game game = initialize();
     PlayerAction playerAction = PlayerAction::IDLE;
 
     struct timeb frameStart, frameEnd;
     ftime(&frameStart);
     int frameTimeDiff;
-
-    srand((unsigned)time(NULL));
 
     //Start up SDL and create window
     if (!initGfx())
