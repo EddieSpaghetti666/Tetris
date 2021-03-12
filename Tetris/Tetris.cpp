@@ -10,15 +10,30 @@
 #include "Texture.h"
 
 
-const int SCREEN_WIDTH = 953; //These are the dimensions of the BG texture. This is a hack for now.
+const int SCREEN_WIDTH = 600; //These are the dimensions of the BG texture. This is a hack for now.
 const int SCREEN_HEIGHT = 565;
 
 const int SQUARE_PIXEL_SIZE = 16;
 
-const int BOARD_PIXEL_WIDTH = BOARD_WIDTH * SQUARE_PIXEL_SIZE;
-const int BOARD_PIXEL_HEIGHT = BOARD_HEIGHT * SQUARE_PIXEL_SIZE;
+const int BORDER_PADDING = 10; //There are 10 pixels of padding for the board border.
 
-const SDL_Rect boardViewPort = { (SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2, BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT }; //This centers the board.
+const int BOARD_PIXEL_WIDTH = BOARD_WIDTH * SQUARE_PIXEL_SIZE + BORDER_PADDING;
+const int BOARD_PIXEL_HEIGHT = BOARD_HEIGHT * SQUARE_PIXEL_SIZE + BORDER_PADDING;
+
+const SDL_Rect boardViewPort = { (SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT)  / 2, BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT }; //This centers the board.
+const SDL_Rect scoreHoldViewPort = { 0, 0, ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2), SCREEN_HEIGHT };
+const SDL_Rect nextPiecesViewPort = { ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2) + BOARD_PIXEL_WIDTH, 0, scoreHoldViewPort.w + boardViewPort.w, SCREEN_HEIGHT };
+
+//These are the positions of the full piece images on the sprite sheet.
+SDL_Rect fullPieceClips[7] = {		 {1, 249, 64, 16}, //Line
+									 {145, 305, 32, 32}, //Square
+									 {9, 177, 48, 32}, //J
+									 {9, 113, 48, 32}, //L
+									 {9, 305, 48, 32}, //S
+									 {9, 49, 48, 32}, //T
+									 {137, 241, 48, 32}, //Z 
+};
+
 
 //Starts up SDL and creates a window
 bool initGfx();
@@ -50,9 +65,16 @@ int main(int argc, char* argv[]) {
 	}
 	else
 	{
+		//TODO: handle textures in a better way than this probably.
 		Texture boardTile(gRenderer);
 		Texture spriteSheet(gRenderer);
 		Texture background(gRenderer);
+		Texture boardBorder(gRenderer);
+		Texture heldBox(gRenderer);
+		Texture scoreBox(gRenderer);
+		Texture nextPiecesBox(gRenderer);
+		Texture levelBox(gRenderer);
+
 
 		//TODO: MOVE TO A FUNCTION. CANT MOVE TO HEADER B/C TEXTURE NEEDS RENDERER
 		//Sprite Rectangles
@@ -100,18 +122,39 @@ int main(int argc, char* argv[]) {
 		spriteClips[6].h = 16;
 
 		//Load media
-		if (!boardTile.loadFromFile("Board_Tile.png"))
+		if (!boardTile.loadFromFile("BoardTile2.png"))
 		{
-			printf("Failed to load media! Tetris Board\n");
+			printf("Failed to load media! Tetris Board Tile\n");
 		}
 		if (!spriteSheet.loadFromFile("Tetris_Sprites.png"))
 		{
-			printf("Failed to load media! Tetris Board\n");
+			printf("Failed to load media! Tetris Sprites\n");
 		}
 		if (!background.loadFromFile("Tetris_BG.jpg"))
 		{
-			printf("Failed to load media! Tetris Board\n");
+			printf("Failed to load media! Tetris Background\n");
 		}
+		if (!boardBorder.loadFromFile("BGBorder.png"))
+		{
+			printf("Failed to load media! Tetris Board Border\n");
+		}
+		if (!heldBox.loadFromFile("Hold.png"))
+		{
+			printf("Failed to load media! Tetris Hold Box\n");
+		}
+		if (!scoreBox.loadFromFile("Score.png"))
+		{
+			printf("Failed to load media! Tetris Score Box\n");
+		}
+		if (!nextPiecesBox.loadFromFile("next.png"))
+		{
+			printf("Failed to load media! Tetris Next Box\n");
+		}
+		if (!levelBox.loadFromFile("Level.png"))
+		{
+			printf("Failed to load media! Tetris Next Box\n");
+		}
+		
 		else
 		{
 
@@ -182,19 +225,51 @@ int main(int argc, char* argv[]) {
 
 				//Clear screen
 				SDL_RenderClear(gRenderer);
+
+				//Render Background
 				SDL_RenderSetViewport(gRenderer, 0);
-
 				background.render(0, 0, 0, 0.5);
+				//Render Hold Piece Box
+				SDL_RenderSetViewport(gRenderer, &scoreHoldViewPort);
+				heldBox.render(scoreHoldViewPort.w - 100, (scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2); //IDK WTF THIS IS ANY MORE IM JUST TYPING RANDOM NUMBERS!!
 
+				//Render the held piece if there is one
+				TetranimoType heldPiece = game.heldPiece.type;
+				if (heldPiece != TetranimoType::EMPTY) {
+
+					//We need to offset where we draw the pieces based on their size to keep them centered
+					int pieceWidthOffset = fullPieceClips[heldPiece].w / 2; 
+					int pieceHeightOffset = heldPiece == TetranimoType::LINE ? 0 : fullPieceClips[heldPiece].h / 4;
+
+					//TODO: setAlpha is garbage.
+					spriteSheet.setAlpha(185);
+					spriteSheet.render(scoreHoldViewPort.w - 100 + (heldBox.getWidth() / 2 - pieceWidthOffset), // Vertical center of held piece box
+						(scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2 + (heldBox.getHeight()/2 - pieceHeightOffset), // Horizontal center of held piece box
+						&fullPieceClips[heldPiece]);
+					spriteSheet.setAlpha(225);
+				}
+
+				//Render Score Box
+				scoreBox.render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.getHeight() + 5);
+				//Render Level Box
+				levelBox.render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.getHeight() + scoreBox.getHeight() + 10);
+
+				//Render Next Pieces box
+				SDL_RenderSetViewport(gRenderer, &nextPiecesViewPort);
+				nextPiecesBox.render(5, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2);
+				
 
 				SDL_RenderSetViewport(gRenderer, &boardViewPort);
+
+				boardBorder.render(0,0,0);
 				//TODO do this is drawBoard                
+				boardTile.setAlpha(122); // this sets the board tiles to ~50% opacity.
 				for (int i = 0; i < BOARD_HEIGHT; i++) {
 					for (int j = 0; j < BOARD_WIDTH; j++) {
 						if (game.board[i][j].occupyingPiece == TetranimoType::EMPTY)
-							boardTile.render((j * SQUARE_PIXEL_SIZE), (i * SQUARE_PIXEL_SIZE), 0);
+							boardTile.render((j * SQUARE_PIXEL_SIZE) + 5,( i * SQUARE_PIXEL_SIZE) + 5, 0); //NOTE: The +5's are to account for the border width. Holy shit this is ugly.
 						else
-							spriteSheet.render((j * SQUARE_PIXEL_SIZE), (i * SQUARE_PIXEL_SIZE), &spriteClips[game.board[i][j].occupyingPiece]);
+							spriteSheet.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, &spriteClips[game.board[i][j].occupyingPiece]);
 
 					}
 				}

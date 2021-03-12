@@ -40,5 +40,23 @@
     <Image Include="Tetris_Sprites.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="BoardTile2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="BGBorder.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Hold.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Score.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="next.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Level.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -7,6 +7,7 @@ Texture::Texture(SDL_Renderer* renderer)
 	mTexture = NULL;
 	mWidth = 0;
 	mHeight = 0;
+	mAlpha = 0;
 	this->renderer = renderer;
 	
 }
@@ -100,6 +101,16 @@ int Texture::getWidth()
 int Texture::getHeight()
 {
 	return mHeight;
+}
+
+int Texture::getAlpha() {
+	return mAlpha;
+}
+
+void Texture::setAlpha(int alpha){
+	mAlpha = alpha;
+	if(mTexture != NULL)
+		SDL_SetTextureAlphaMod(mTexture, mAlpha);
 }
 
 

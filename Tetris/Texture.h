@@ -21,6 +21,11 @@ public:
 	//Renders texture at given point
 	void render(int x, int y, SDL_Rect* clip = NULL, double scale = 1.0);
 
+
+	int getAlpha();
+
+	void setAlpha(int alpha);
+
 	//Gets image dimensions
 	int getWidth();
 	int getHeight();
@@ -34,5 +39,7 @@ private:
 	//Image dimensions
 	int mWidth;
 	int mHeight;
+
+	int mAlpha;
 };
 
