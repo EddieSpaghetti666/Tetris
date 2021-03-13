@@ -52,11 +52,16 @@
     <Image Include="Score.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="next.png">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="Level.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="NextSmall.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ScoreFont.ttf">
+      <Filter>Resource Files</Filter>
+    </Font>
   </ItemGroup>
 </Project>
