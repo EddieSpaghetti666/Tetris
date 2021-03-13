@@ -31,10 +31,30 @@ typedef enum TetranimoType {
     EMPTY
 };
 
-typedef struct Square {
-    char oldBoardImg;
-    TetranimoType occupyingPiece;
+typedef enum class TetranimoState {
+    ACTIVE,
+    GHOST,
+    QUEUED
 };
+
+
+typedef struct
+{
+    SDL_Rect spritePos;
+    TetranimoType type;
+    TetranimoState state;
+    Point points[TETROMINO_POINTS];
+    Point pivot;
+    int sprite;
+
+} Tetranimo;
+
+typedef struct Square {
+    //This seems retarded but I can't think of a better way to do this right now.
+    Tetranimo occupyingPiece;
+};
+
+
 
 typedef Square Board[BOARD_HEIGHT][BOARD_WIDTH];
 
@@ -42,7 +62,7 @@ typedef Square Board[BOARD_HEIGHT][BOARD_WIDTH];
 typedef Point StartingPos[4];
 
 const StartingPos STARTING_COORDS[7] = {
-    { {5,0}, {5,1}, {5,2}, {5,3} }, // Line
+    { {4,0}, {5,0}, {6,0}, {7,0} }, // Line
     { {5,0}, {6,0}, {5,1}, {6,1} }, // Square
     { {4,0}, {4,1}, {5,1}, {6,1} }, // J
     { {4,1}, {5,1}, {6,1}, {6,0} }, // L
@@ -102,23 +122,6 @@ static const int ROTATION_MATRIX_90[2][2] = { 0, -1,
 static const int ROTATION_MATRIX_270[2][2] = { 0, 1,
                                               -1, 0 };
 
-typedef enum class TetranimoState {
-    ACTIVE,
-    GHOST,
-    QUEUED
-};
-
-
-typedef struct
-{
-    SDL_Rect spritePos;
-    TetranimoType type;
-    TetranimoState state;
-    Point points[TETROMINO_POINTS];
-    Point pivot;
-    int sprite;
-
-} Tetranimo;
 
 typedef enum class PlayerAction {
     IDLE,

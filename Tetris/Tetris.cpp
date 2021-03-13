@@ -45,6 +45,15 @@ SDL_Rect spriteClips[7] = { {1, 249, 16, 16}, //Line
 							{153, 241, 16, 16}, //Z 
 };
 
+SDL_Rect ghostSpriteClips[7] = { {1, 249, 16, 16}, //Line
+							     {145, 321, 16, 16}, //Square
+							     {9, 177, 16, 16}, //J
+							     {9, 129, 16, 16}, //L
+							     {25, 305, 16, 16}, //S
+							     {9, 65, 16, 16}, //T
+							     {137, 241, 16, 16}, //Z 
+};
+
 
 //Starts up SDL and creates a window
 bool initGfx();
@@ -86,6 +95,7 @@ int main(int argc, char* argv[]) {
 		//TODO: handle textures in a better way than this probably.
 		Texture boardTile(gRenderer);
 		Texture spriteSheet(gRenderer);
+		Texture ghostSpriteSheet(gRenderer);
 		Texture background(gRenderer);
 		Texture boardBorder(gRenderer);
 		Texture heldBox(gRenderer);
@@ -102,6 +112,10 @@ int main(int argc, char* argv[]) {
 			printf("Failed to load media! Tetris Board Tile\n");
 		}
 		if (!spriteSheet.loadFromFile("Tetris_Sprites.png"))
+		{
+			printf("Failed to load media! Tetris Sprites\n");
+		}
+		if (!ghostSpriteSheet.loadFromFile("Tetris_Ghost_Sprites.png"))
 		{
 			printf("Failed to load media! Tetris Sprites\n");
 		}
@@ -291,10 +305,13 @@ int main(int argc, char* argv[]) {
 				boardTile.setAlpha(122); // this sets the board tiles to ~50% opacity.
 				for (int i = 0; i < BOARD_HEIGHT; i++) {
 					for (int j = 0; j < BOARD_WIDTH; j++) {
-						if (game.board[i][j].occupyingPiece == TetranimoType::EMPTY)
+						Tetranimo piece = game.board[i][j].occupyingPiece;
+						if (piece.type == TetranimoType::EMPTY)
 							boardTile.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, 0); //NOTE: The +5's are to account for the border width. Holy shit this is ugly.
+						else if(piece.state == TetranimoState::GHOST)
+							ghostSpriteSheet.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, &ghostSpriteClips[piece.type]);
 						else
-							spriteSheet.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, &spriteClips[game.board[i][j].occupyingPiece]);
+							spriteSheet.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, &spriteClips[piece.type]);
 
 					}
 				}
@@ -397,7 +414,7 @@ Game initialize() {
 	//fill in the board.
 	for (int i = 0; i < BOARD_HEIGHT; i++) {
 		for (int j = 0; j < BOARD_WIDTH; j++) {
-			game.board[i][j].occupyingPiece = TetranimoType::EMPTY;
+			game.board[i][j].occupyingPiece.type = TetranimoType::EMPTY;
 		}
 	}
 
@@ -598,7 +615,7 @@ Tetranimo forcePieceDown(Tetranimo piece, Board board)
 
 void drawPiece(Tetranimo piece, Board board) {
 	for (int i = 0; i < TETROMINO_POINTS; i++) {
-		board[piece.points[i].y][piece.points[i].x].occupyingPiece = piece.type;
+		board[piece.points[i].y][piece.points[i].x].occupyingPiece = piece;
 	}
 }
 
@@ -606,7 +623,7 @@ void drawPiece(Tetranimo piece, Board board) {
 void erasePiece(Tetranimo* piece, Board board)
 {
 	for (int i = 0; i < TETROMINO_POINTS; i++) {
-		board[piece->points[i].y][piece->points[i].x].occupyingPiece = TetranimoType::EMPTY;
+		board[piece->points[i].y][piece->points[i].x].occupyingPiece.type = TetranimoType::EMPTY;
 	}
 
 }
@@ -621,7 +638,7 @@ bool checkCollision(Point points[], Board board)
 		if (row > BOARD_WIDTH - 1 || row < 0 || col > BOARD_HEIGHT - 1 || col < 0) {
 			return true;
 		}
-		if (board[col][row].occupyingPiece != TetranimoType::EMPTY) {
+		if (board[col][row].occupyingPiece.type != TetranimoType::EMPTY) {
 			return true;
 		}
 	}
@@ -646,7 +663,7 @@ void placeActivePiece(Game* game)
 {
 	Tetranimo activePiece = game->activePiece;
 	for (int i = 0; i < TETROMINO_POINTS; i++) {
-		if (activePiece.points[i].y == 0 && game->board[activePiece.points[i].x][0].occupyingPiece != TetranimoType::EMPTY) {
+		if (activePiece.points[i].y == 0 && game->board[activePiece.points[i].x][0].occupyingPiece.type != TetranimoType::EMPTY) {
 			game->state = GameState::OVER;
 			return;
 		}
@@ -654,7 +671,7 @@ void placeActivePiece(Game* game)
 	for (int i = 0; i < TETROMINO_POINTS; i++) {
 		int row = activePiece.points[i].y;
 		int col = activePiece.points[i].x;
-		game->board[row][col].occupyingPiece = game->activePiece.type;
+		game->board[row][col].occupyingPiece = game->activePiece;
 	}
 	//You placed the current piece so set the piece active flag off.
 	game->pieceIsActive = false;
@@ -666,7 +683,7 @@ void breakCompletedRow(Game* game, int row)
 {
 	int i;
 	for (i = 0; i < BOARD_WIDTH; i++)
-		game->board[row][i].occupyingPiece = TetranimoType::EMPTY;
+		game->board[row][i].occupyingPiece.type = TetranimoType::EMPTY;
 	game->totalLinesCleared++;
 	game->score += 40 * (game->level);
 
@@ -704,7 +721,7 @@ void dropRow(Game* game, int row)
 
 bool rowCompleted(Board board, int row) {
 	for (int col = 0; col < BOARD_WIDTH; col++) {
-		if (board[row][col].occupyingPiece == TetranimoType::EMPTY) {
+		if (board[row][col].occupyingPiece.type == TetranimoType::EMPTY) {
 			return false;
 		}
 	}
@@ -790,6 +807,7 @@ void updateGhostPiece(Game* game) {
 		}
 	}
 	game->ghostPiece = updatedGhostPiece;
+
 }
 
 /* drawBoard: Renders the appropraite textures to the SDL Window based on the current state of the board */
