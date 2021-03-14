@@ -7,12 +7,12 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <string>
-#include "Texture.h"
 #include <SDL_ttf.h>
+#include "Gfx.cpp"
+
+#define CENTER(x,y) (x - y) / 2
 
 
-const int SCREEN_WIDTH = 600; //These are the dimensions of the BG texture. This is a hack for now.
-const int SCREEN_HEIGHT = 565;
 
 const int SQUARE_PIXEL_SIZE = 16;
 
@@ -21,7 +21,7 @@ const int BORDER_PADDING = 10; //There are 10 pixels of padding for the board bo
 const int BOARD_PIXEL_WIDTH = BOARD_WIDTH * SQUARE_PIXEL_SIZE + BORDER_PADDING;
 const int BOARD_PIXEL_HEIGHT = BOARD_HEIGHT * SQUARE_PIXEL_SIZE + BORDER_PADDING;
 
-const SDL_Rect boardViewPort = { (SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2, BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT }; //This centers the board.
+const SDL_Rect boardViewPort = { CENTER(SCREEN_WIDTH, BOARD_PIXEL_WIDTH) , CENTER(SCREEN_HEIGHT, BOARD_PIXEL_HEIGHT), BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT }; //This centers the board.
 const SDL_Rect scoreHoldViewPort = { 0, 0, ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2), SCREEN_HEIGHT };
 const SDL_Rect nextPiecesViewPort = { ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2) + BOARD_PIXEL_WIDTH, 0, scoreHoldViewPort.w + boardViewPort.w, SCREEN_HEIGHT };
 
@@ -46,25 +46,26 @@ SDL_Rect spriteClips[7] = { {1, 249, 16, 16}, //Line
 };
 
 SDL_Rect ghostSpriteClips[7] = { {1, 249, 16, 16}, //Line
-							     {145, 321, 16, 16}, //Square
-							     {9, 177, 16, 16}, //J
-							     {9, 129, 16, 16}, //L
-							     {25, 305, 16, 16}, //S
-							     {9, 65, 16, 16}, //T
-							     {137, 241, 16, 16}, //Z 
+								 {145, 321, 16, 16}, //Square
+								 {9, 177, 16, 16}, //J
+								 {9, 129, 16, 16}, //L
+								 {25, 305, 16, 16}, //S
+								 {9, 65, 16, 16}, //T
+								 {137, 241, 16, 16}, //Z 
 };
 
+//NOT GOOD.
+Texture boardTile;
+Texture spriteSheet;
+Texture ghostSpriteSheet;
+Texture background;
+Texture boardBorder;
+Texture heldBox;
+Texture scoreBox;
+Texture nextPiecesBox;
+Texture levelBox;
+Texture scoreFont;
 
-//Starts up SDL and creates a window
-bool initGfx();
-//bool loadMedia(Texture* texture);
-//Frees media and shuts down SDL
-
-SDL_Window* gWindow = NULL;
-SDL_Renderer* gRenderer = NULL;
-
-//Globally used font used to generate the texture used to render the score and other stuff.
-TTF_Font* scoreFont = NULL;
 
 int main(int argc, char* argv[]) {
 
@@ -79,316 +80,115 @@ int main(int argc, char* argv[]) {
 	int frameTimeDiff;
 
 	//Start up SDL and create window
-	if (!initGfx())
+	if (!Gfx::initGfx())
 	{
 		printf("Failed to initialize!\n");
+		exit(-1);
 	}
-	else
-	{
 
-		scoreFont = TTF_OpenFont("ScoreFont.ttf", 12);
-		if (scoreFont == NULL)
+	loadMedia();
+
+	SDL_Event event;
+
+	/* Game Loop */
+	while (game.state != GameState::OVER) {
+		//Handle events on queue
+		while (SDL_PollEvent(&event) != 0)
 		{
-			printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
-		}
-
-		//TODO: handle textures in a better way than this probably.
-		Texture boardTile(gRenderer);
-		Texture spriteSheet(gRenderer);
-		Texture ghostSpriteSheet(gRenderer);
-		Texture background(gRenderer);
-		Texture boardBorder(gRenderer);
-		Texture heldBox(gRenderer);
-		Texture scoreBox(gRenderer);
-		Texture nextPiecesBox(gRenderer);
-		Texture levelBox(gRenderer);
-		Texture scoreFont(gRenderer,scoreFont);
-
-		
-
-		//Load media
-		if (!boardTile.loadFromFile("BoardTile2.png"))
-		{
-			printf("Failed to load media! Tetris Board Tile\n");
-		}
-		if (!spriteSheet.loadFromFile("Tetris_Sprites.png"))
-		{
-			printf("Failed to load media! Tetris Sprites\n");
-		}
-		if (!ghostSpriteSheet.loadFromFile("Tetris_Ghost_Sprites.png"))
-		{
-			printf("Failed to load media! Tetris Sprites\n");
-		}
-		if (!background.loadFromFile("Tetris_BG.jpg"))
-		{
-			printf("Failed to load media! Tetris Background\n");
-		}
-		if (!boardBorder.loadFromFile("BGBorder.png"))
-		{
-			printf("Failed to load media! Tetris Board Border\n");
-		}
-		if (!heldBox.loadFromFile("Hold.png"))
-		{
-			printf("Failed to load media! Tetris Hold Box\n");
-		}
-		if (!scoreBox.loadFromFile("Score.png"))
-		{
-			printf("Failed to load media! Tetris Score Box\n");
-		}
-		if (!nextPiecesBox.loadFromFile("NextSmall.png"))
-		{
-			printf("Failed to load media! Tetris Next Box\n");
-		}
-		if (!levelBox.loadFromFile("Level.png"))
-		{
-			printf("Failed to load media! Tetris Next Box\n");
-		}
-
-		else
-		{
-
-			SDL_Event event;
-
-			while (game.state != GameState::OVER) {
-				//Handle events on queue
-				while (SDL_PollEvent(&event) != 0)
-				{
-					//User requests quit
-					if (event.type == SDL_QUIT)
-					{
-						game.state = GameState::OVER;
-					}
-					else if (event.type == SDL_KEYDOWN) {
-						switch (event.key.keysym.sym)
-						{
-						case SDLK_ESCAPE:
-							playerAction = PlayerAction::QUIT;
-							break;
-
-						case SDLK_DOWN:
-							playerAction = PlayerAction::MOVE_DOWN;
-							break;
-
-						case SDLK_LEFT:
-							playerAction = PlayerAction::MOVE_LEFT;
-							break;
-
-						case SDLK_RIGHT:
-							playerAction = PlayerAction::MOVE_RIGHT;
-							break;
-
-
-						case SDLK_UP:
-							playerAction = PlayerAction::ROTATE_RIGHT;
-							break;
-
-						case SDLK_z:
-							playerAction = PlayerAction::ROTATE_LEFT;
-							break;
-
-						case SDLK_SPACE:
-							playerAction = PlayerAction::FORCE_DOWN;
-							break;
-
-						case SDLK_c:
-							playerAction = PlayerAction::HOLD;
-							break;
-
-						default:
-
-							break;
-						}
-					}
-				}
-
-				ftime(&frameEnd);
-				frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
-
-				if (frameTimeDiff > FRAME_RATE) {
-					update(playerAction, &game);
-					draw(&game);
-					ftime(&frameStart);
-					playerAction = PlayerAction::IDLE;
-				}
-
-
-				//Clear screen
-				SDL_RenderClear(gRenderer);
-
-				//Render Background
-				SDL_RenderSetViewport(gRenderer, 0);
-				background.render(0, 0, 0, 0.5);
-				//Render Hold Piece Box
-				SDL_RenderSetViewport(gRenderer, &scoreHoldViewPort);
-				heldBox.render(scoreHoldViewPort.w - 100, (scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2); //IDK WTF THIS IS ANY MORE IM JUST TYPING RANDOM NUMBERS!!
-
-				//Render the held piece if there is one
-				TetranimoType heldPiece = game.heldPiece.type;
-				if (heldPiece != TetranimoType::EMPTY) {
-
-					//We need to offset where we draw the pieces based on their size to keep them centered
-					int pieceWidthOffset = fullPieceClips[heldPiece].w / 2;
-					int pieceHeightOffset = heldPiece == TetranimoType::LINE ? 0 : fullPieceClips[heldPiece].h / 4;
-
-					//TODO: setAlpha is garbage.
-					spriteSheet.setAlpha(185);
-					spriteSheet.render(scoreHoldViewPort.w - 100 + (heldBox.getWidth() / 2 - pieceWidthOffset), // Horizontal center of held piece box
-						(scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2 + (heldBox.getHeight() / 2 - pieceHeightOffset), // Vertical center of held piece box
-						&fullPieceClips[heldPiece]);
-					spriteSheet.setAlpha(225);
-				}
-
-				//Render Score Box
-				scoreBox.render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.getHeight() + 5);
-
-				//TODO: Try to render score with "blended" text mode maybe to make it look less pixelated?
-
-				//Render the score as Text
-				char scoreTextBuffer[100];
-				sprintf_s(scoreTextBuffer, "%d", game.score);
-				SDL_Color textColor = { 0xFF, 0xFF, 0xFF }; //White
-				if (!scoreFont.loadFromRenderedText(scoreTextBuffer, textColor))
-				{
-					printf("Failed to load media! Tetris Next Box\n");
-				}
-
-				scoreFont.render(scoreHoldViewPort.w - 100 + scoreBox.getWidth() / 2 - scoreFont.getWidth()/2, //Center text Horizontally in box
-					((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.getHeight() + scoreBox.getHeight()/2 + 4); //Center text Vertically in box
-					
-
-				//Render Level Box
-				levelBox.render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.getHeight() + scoreBox.getHeight() + 10);
-
-				//Render the level as Text
-				char levelTextBuffer[10];
-				sprintf_s(levelTextBuffer, "%d", game.level);
-				if (!scoreFont.loadFromRenderedText(levelTextBuffer, textColor))
-				{
-					printf("Failed to load media! Tetris Next Box\n");
-				}
-
-				//GOOD FUCKING LORD THIS IS A MESS RIGHT NOW
-				scoreFont.render(scoreHoldViewPort.w - 100 + levelBox.getWidth() / 2 - scoreFont.getWidth() / 2, //Center text Horizontally in box
-					((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.getHeight() + scoreBox.getHeight() + levelBox.getHeight()/2 + 10 ); //Center text Vertically in box
-
-
-
-				//Render Next Pieces box
-				SDL_RenderSetViewport(gRenderer, &nextPiecesViewPort);
-				nextPiecesBox.render(4, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2 + 24); // +24 is because I feel like it looks better further down. IDK why.
-
-				//Render Next Pieces
-				std::queue<Tetranimo> nextPieces = game.upcomingPieces;
-
-
-				Tetranimo nextPiece = nextPieces.front();
-				TetranimoType type = nextPiece.type;
-
-				int pieceWidthOffset = fullPieceClips[type].w / 2;
-				int pieceHeightOffset = type == TetranimoType::LINE ? 0 : fullPieceClips[type].h / 4;
-
-
-				//TODO: setAlpha is garbage.
-				spriteSheet.setAlpha(185);
-				spriteSheet.render(3 + nextPiecesBox.getWidth() / 2 - pieceWidthOffset, // Horizontal center of next piece box
-					((SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2 + 24) + (nextPiecesBox.getHeight() / 2) - pieceHeightOffset, // Vorizontal center of next piece box
-					&fullPieceClips[type]);
-				spriteSheet.setAlpha(225);
-
-
-
-
-				SDL_RenderSetViewport(gRenderer, &boardViewPort);
-
-				boardBorder.render(0, 0, 0);
-				//TODO do this is drawBoard                
-				boardTile.setAlpha(122); // this sets the board tiles to ~50% opacity.
-				for (int i = 0; i < BOARD_HEIGHT; i++) {
-					for (int j = 0; j < BOARD_WIDTH; j++) {
-						Tetranimo piece = game.board[i][j].occupyingPiece;
-						if (piece.type == TetranimoType::EMPTY)
-							boardTile.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, 0); //NOTE: The +5's are to account for the border width. Holy shit this is ugly.
-						else if(piece.state == TetranimoState::GHOST)
-							ghostSpriteSheet.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, &ghostSpriteClips[piece.type]);
-						else
-							spriteSheet.render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, &spriteClips[piece.type]);
-
-					}
-				}
-
-
-				//Update screen
-				SDL_RenderPresent(gRenderer);
-
+			//User requests quit
+			if (event.type == SDL_QUIT)
+			{
+				game.state = GameState::OVER;
+			}
+			else if (event.type == SDL_KEYDOWN) {
+				playerAction = getAction(event);
 			}
 		}
+
+		ftime(&frameEnd);
+		frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
+
+		if (frameTimeDiff > FRAME_RATE) {
+			//Clear screen
+			Gfx::clearRenderer(gRenderer);
+			//Update Game state.
+			update(playerAction, &game);
+			//Draw things
+			drawUI(game);
+			drawBoard(game);
+
+			//Present what renderer drew
+			Gfx::renderPresent(gRenderer);
+
+			ftime(&frameStart);
+		}
 	}
+	/*End of Game loop*/
+
+	//TODO: I'm leaking a lot memory right now by not freeing textures NOT GOOD.
 	teardown();
 
 	return 0;
 
 }
 
-bool initGfx()
-{
-	//Initialization flag
-	bool success = true;
+PlayerAction getAction(SDL_Event event) {
 
-	//Initialize SDL
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	PlayerAction action;
+
+	switch (event.key.keysym.sym)
 	{
-		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-		success = false;
+	case SDLK_ESCAPE:
+		action = PlayerAction::QUIT;
+		break;
+
+	case SDLK_DOWN:
+		action = PlayerAction::MOVE_DOWN;
+		break;
+
+	case SDLK_LEFT:
+		action = PlayerAction::MOVE_LEFT;
+		break;
+
+	case SDLK_RIGHT:
+		action = PlayerAction::MOVE_RIGHT;
+		break;
+
+
+	case SDLK_UP:
+		action = PlayerAction::ROTATE_RIGHT;
+		break;
+
+	case SDLK_z:
+		action = PlayerAction::ROTATE_LEFT;
+		break;
+
+	case SDLK_SPACE:
+		action = PlayerAction::FORCE_DOWN;
+		break;
+
+	case SDLK_c:
+		action = PlayerAction::HOLD;
+		break;
+
+	default:
+		action = PlayerAction::IDLE;
+		break;
 	}
-	else
-	{
-		//Set texture filtering to linear
-		if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
-		{
-			printf("Warning: Linear texture filtering not enabled!");
-		}
+	return action;
+}
 
-		//Create window
-		gWindow = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-		if (gWindow == NULL)
-		{
-			printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-			success = false;
-		}
-		else
-		{
-			//Create renderer for window
-			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
-			if (gRenderer == NULL)
-			{
-				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-				success = false;
-			}
-			else
-			{
-
-				//Initialize renderer color
-				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-
-				//Initialize PNG loading
-				int imgFlags = IMG_INIT_PNG;
-				if (!(IMG_Init(imgFlags) & imgFlags))
-				{
-					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
-					success = false;
-				}
-
-				//Initialize SDL_ttf
-				if (TTF_Init() == -1)
-				{
-					printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
-					success = false;
-				}
-			}
-		}
-	}
-
-	return success;
+void loadMedia() {
+	//TODO: handle textures in a better way than this probably.
+	boardTile = Gfx::loadTextureFromFile("BoardTile2.png");
+	spriteSheet = Gfx::loadTextureFromFile("Tetris_Sprites.png");
+	ghostSpriteSheet = Gfx::loadTextureFromFile("Tetris_Ghost_Sprites.png");
+	background = Gfx::loadTextureFromFile("Tetris_BG.jpg");
+	boardBorder = Gfx::loadTextureFromFile("BGBorder.png");
+	heldBox = Gfx::loadTextureFromFile("Hold.png");
+	scoreBox = Gfx::loadTextureFromFile("Score.png");
+	nextPiecesBox = Gfx::loadTextureFromFile("NextSmall.png");
+	levelBox = Gfx::loadTextureFromFile("Level.png");
 }
 
 /*This function initializes the necissary Game state and Board. */
@@ -501,14 +301,10 @@ void update(PlayerAction playerAction, Game* game) {
 
 }
 
-void draw(Game* game) {
-
-}
-
 void teardown() {
 	//Get rid of the font.
-	TTF_CloseFont(scoreFont);
-	scoreFont = NULL;
+	TTF_CloseFont(gFont);
+	gFont = NULL;
 
 	//Free resources and close SDL
 	SDL_DestroyRenderer(gRenderer);
@@ -810,9 +606,107 @@ void updateGhostPiece(Game* game) {
 
 }
 
+void drawUI(Game game) {
+
+	//Render Background
+	Gfx::setViewPort(gRenderer, 0);
+	Gfx::render(0, 0, background, 0, 0.5);
+
+	//Render Hold Piece Box
+	Gfx::setViewPort(gRenderer, &scoreHoldViewPort);
+	Gfx::render(scoreHoldViewPort.w - 100, (scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2, heldBox); //IDK WTF THIS IS ANY MORE IM JUST TYPING RANDOM NUMBERS!!
+
+	//Render the held piece if there is one
+	TetranimoType heldPiece = game.heldPiece.type;
+	if (heldPiece != TetranimoType::EMPTY) {
+
+		//We need to offset where we draw the pieces based on their size to keep them centered
+		int pieceWidthOffset = fullPieceClips[heldPiece].w / 2;
+		int pieceHeightOffset = heldPiece == TetranimoType::LINE ? 0 : fullPieceClips[heldPiece].h / 4;
+
+		//TODO: setAlpha is garbage.
+		Gfx::setAlpha(spriteSheet, 0.5);
+		Gfx::render(scoreHoldViewPort.w - 100 + (heldBox.w / 2 - pieceWidthOffset), // Horizontal center of held piece box
+			(scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2 + (heldBox.h / 2 - pieceHeightOffset), // Vertical center of held piece box
+			spriteSheet,
+			&fullPieceClips[heldPiece]);
+		Gfx::setAlpha(spriteSheet, 1.0);
+	}
+
+	//Render Score Box
+	Gfx::render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + 5, scoreBox);
+
+	//TODO: Try to render score with "blended" text mode maybe to make it look less pixelated?
+
+	//Render the score as Text
+	char scoreTextBuffer[100];
+	sprintf_s(scoreTextBuffer, "%d", game.score);
+	SDL_Color textColor = { 0xFF, 0xFF, 0xFF }; //White
+	scoreFont = Gfx::loadFromRenderedText(scoreTextBuffer, textColor);
+
+	Gfx::render(scoreHoldViewPort.w - 100 + scoreBox.w / 2 - scoreFont.w / 2, //Center text Horizontally in box
+		((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + scoreBox.h / 2 + 4, //Center text Vertically in box
+		scoreFont);
+
+	//Render Level Box
+	Gfx::render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + scoreBox.h + 10, levelBox);
+
+	//Render the level as Text
+	char levelTextBuffer[10];
+	sprintf_s(levelTextBuffer, "%d", game.level);
+	scoreFont = Gfx::loadFromRenderedText(levelTextBuffer, textColor);
+
+	//GOOD FUCKING LORD THIS IS A MESS RIGHT NOW
+	Gfx::render(scoreHoldViewPort.w - 100 + levelBox.w / 2 - scoreFont.w / 2, //Center text Horizontally in box
+		((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + scoreBox.h + levelBox.h / 2 + 10, //Center text Vertically in box
+		scoreFont);
+
+
+
+	//Render Next Pieces box
+	Gfx::setViewPort(gRenderer, &nextPiecesViewPort);
+	Gfx::render(4, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2 + 24, nextPiecesBox); // +24 is because I feel like it looks better further down. IDK why.
+
+	//Render Next Pieces
+	std::queue<Tetranimo> nextPieces = game.upcomingPieces;
+
+
+	Tetranimo nextPiece = nextPieces.front();
+	TetranimoType type = nextPiece.type;
+
+	int pieceWidthOffset = fullPieceClips[type].w / 2;
+	int pieceHeightOffset = type == TetranimoType::LINE ? 0 : fullPieceClips[type].h / 4;
+
+	Gfx::setAlpha(spriteSheet, .75);
+	Gfx::render(3 + nextPiecesBox.w / 2 - pieceWidthOffset, // Horizontal center of next piece box
+		((SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2 + 24) + (nextPiecesBox.h / 2) - pieceHeightOffset, // Vorizontal center of next piece box
+		spriteSheet,
+		&fullPieceClips[type]);
+	Gfx::setAlpha(spriteSheet, 1.0);
+
+}
+
 /* drawBoard: Renders the appropraite textures to the SDL Window based on the current state of the board */
-void drawBoard(Game* game)
+void drawBoard(Game game)
 {
+	Gfx::setViewPort(gRenderer, &boardViewPort);
+
+	Gfx::render(0, 0, boardBorder, 0);
+
+	//TODO do this is drawBoard                
+	Gfx::setAlpha(boardTile, .5); // this sets the board tiles to ~50% opacity.
+	for (int i = 0; i < BOARD_HEIGHT; i++) {
+		for (int j = 0; j < BOARD_WIDTH; j++) {
+			Tetranimo piece = game.board[i][j].occupyingPiece;
+			if (piece.type == TetranimoType::EMPTY)
+				Gfx::render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, boardTile); //NOTE: The +5's are to account for the border width. Holy shit this is ugly.
+			else if (piece.state == TetranimoState::GHOST)
+				Gfx::render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, ghostSpriteSheet, &ghostSpriteClips[piece.type]);
+			else
+				Gfx::render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, spriteSheet, &spriteClips[piece.type]);
+
+		}
+	}
 }
 
 

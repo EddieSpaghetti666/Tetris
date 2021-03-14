@@ -146,15 +146,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Tetris.cpp" />
-    <ClCompile Include="Texture.cpp">
-      <DeploymentContent>false</DeploymentContent>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Gfx.cpp" />
     <ClInclude Include="TetrisUtils.h" />
-    <ClInclude Include="Texture.h">
-      <DeploymentContent>false</DeploymentContent>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="BGBorder.png" />

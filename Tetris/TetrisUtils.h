@@ -1,6 +1,6 @@
 #pragma once
 #include <queue>;
-#include "Texture.h"
+#include <SDL.h>
 static const int FRAME_RATE = 1000 / 30;
 static const int BOARD_WIDTH = 10;
 static const int BOARD_HEIGHT = 20;
@@ -164,6 +164,8 @@ typedef struct {
 } Game;
 
 Game initialize();
+PlayerAction getAction(SDL_Event);
+void loadMedia();
 void update(PlayerAction, Game*);
 void draw(Game*);
 void teardown();
@@ -180,9 +182,9 @@ void dropRow(Game*, int);
 void handleGravity(Game*);
 void updateGhostPiece(Game*);
 Tetranimo spawnTetranimo();
-void clearScreen();
 bool rowCompleted(Board board, int row);
-Tetranimo adjustRotatedPiece(Tetranimo, Board, bool);
+void drawUI(Game);
+void drawBoard(Game);
 
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
     int pivot_x = pivot.x;
