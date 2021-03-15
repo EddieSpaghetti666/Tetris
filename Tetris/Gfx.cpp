@@ -3,7 +3,11 @@
 #include <string>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 #define CENTER(x,y) (x - y)/2
+#define SOUND_FREQUENCY 44100
+#define STEREO 2
+#define AUDIO_BITRATE 2048
 
 const int SCREEN_WIDTH = 600; //These are the dimensions of the BG texture. This is a hack for now.
 const int SCREEN_HEIGHT = 565;
@@ -78,7 +82,7 @@ namespace Gfx {
 		bool success = true;
 
 		//Initialize SDL
-		if (SDL_Init(SDL_INIT_VIDEO) < 0)
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
 		{
 			printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 			success = false;
@@ -128,6 +132,14 @@ namespace Gfx {
 		if (gFont == NULL)
 		{
 			printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+			success = false;
+		}
+
+
+		//Initialize SDL_mixer
+		if (Mix_OpenAudio(SOUND_FREQUENCY, MIX_DEFAULT_FORMAT, STEREO, AUDIO_BITRATE) < 0)
+		{
+			printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
 			success = false;
 		}
 

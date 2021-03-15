@@ -10,6 +10,20 @@
 #include <SDL_ttf.h>
 #include "Gfx.cpp"
 #include <set>
+#include <SDL_mixer.h>
+
+#define DROP_SOUND_CHANNEL 2
+
+
+Mix_Music* gMusic = NULL;
+
+//The sound effects that will be used
+Mix_Chunk* SFX_HardDrop = NULL;
+Mix_Chunk* SFX_RowClear = NULL;
+Mix_Chunk* SFX_PieceHold = NULL;
+Mix_Chunk* SFX_PieceMove = NULL;
+
+
 
 
 /* animation stuff */
@@ -63,8 +77,10 @@ int main(int argc, char* argv[]) {
 
 	SDL_Event event;
 
+	
 	/* Game Loop */
 	while (game.state != GameState::OVER) {
+		
 		//Handle events on queue
 		while (SDL_PollEvent(&event) != 0)
 		{
@@ -77,6 +93,21 @@ int main(int argc, char* argv[]) {
 				playerAction = getAction(event);
 			}
 		}
+
+		//start chune
+		if (Mix_PlayingMusic() == 0)
+		{
+			Mix_VolumeMusic(12); //Turn that racket down!
+			//Play the music
+			Mix_PlayMusic(gMusic, 1);
+		}
+
+		//Mixing Volume of other SFX
+		Mix_VolumeChunk(SFX_HardDrop, 20);
+		Mix_VolumeChunk(SFX_PieceHold, 40);
+		Mix_VolumeChunk(SFX_RowClear, 30);
+	
+		
 
 		ftime(&frameEnd);
 		frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
@@ -98,8 +129,6 @@ int main(int argc, char* argv[]) {
 			//Update Game state (unless an animation is playing)
             if(!animationPlaying)
                 update(playerAction, &game);
-
-
 
 
 			//Present what renderer drew
@@ -167,6 +196,33 @@ PlayerAction getAction(SDL_Event event) {
 }
 
 void loadMedia() {
+	/* Load chune */
+	gMusic = Mix_LoadMUS("Tetris_theme.ogg.mp3");
+	if (gMusic == NULL)
+	{
+		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+	}
+	/* Load sound effects */
+	SFX_RowClear = Mix_LoadWAV("SoundEffects\\SFX_RowClear.wav");
+	if (gMusic == NULL)
+	{
+		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+	}
+	SFX_PieceMove = Mix_LoadWAV("SoundEffects\\SFX_PieceMoveLR.wav");
+	if (gMusic == NULL)
+	{
+		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+	}
+	SFX_HardDrop = Mix_LoadWAV("SoundEffects\\SFX_PieceHardDrop.wav");
+	if (gMusic == NULL)
+	{
+		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+	}
+	SFX_PieceHold = Mix_LoadWAV("SoundEffects\\SFX_PieceHold.wav");
+	if (gMusic == NULL)
+	{
+		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+	}
 	//TODO: handle textures in a better way than this probably.
 	boardTile = Gfx::loadTextureFromFile("BoardTile2.png");
 	spriteSheet = Gfx::loadTextureFromFile("Tetris_Sprites.png");
@@ -267,6 +323,7 @@ void update(PlayerAction playerAction, Game* game) {
 	case PlayerAction::FORCE_DOWN: {
 		game->activePiece = forcePieceDown(game->activePiece, game->board);
 		placeActivePiece(game);
+		Mix_PlayChannel(2, SFX_HardDrop, 0);
 		return;
 	}
 	case PlayerAction::HOLD: {
@@ -285,9 +342,14 @@ void update(PlayerAction playerAction, Game* game) {
 			movedPiece = game->activePiece;
 		}
 	}
+	else if (moved(movedPiece, game->activePiece))
+	{
+		Mix_PlayChannel(-1, SFX_PieceMove, 0);
+		game->activePiece = movedPiece;
+	}
 
+	
 
-	game->activePiece = movedPiece;
 	handleGravity(game);
 	updateGhostPiece(game);
 	if (game->pieceIsActive)
@@ -301,6 +363,10 @@ void teardown() {
 	//Get rid of the font.
 	TTF_CloseFont(gFont);
 	gFont = NULL;
+	
+	//Get rid of music
+	Mix_FreeMusic(gMusic);
+	gMusic = NULL;
 
 	//Free resources and close SDL
 	SDL_DestroyRenderer(gRenderer);
@@ -312,12 +378,25 @@ void teardown() {
 	IMG_Quit();
 	TTF_Quit();
 	SDL_Quit();
+	Mix_Quit();
 }
 
 /* spawnPiece: spawns a piece centered at the top of the board. It can be any shaped piece */
 void spawnActivePiece(Game* game)
 {
 	drawPiece(game->activePiece, game->board);
+}
+
+/* Compares position of piece to see if it moved */
+bool moved(Tetranimo originalPos, Tetranimo newPos) {
+	for (int i = 0; i < 4; i++) {
+		Point original = originalPos.points[i];
+		Point dest = newPos.points[i];
+		if ((original.x != dest.x) || (original.y != dest.y)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 /* Takes a piece and a direction to move the piece in. Returns a new piece with updated coordinates.*/
@@ -401,6 +480,7 @@ Tetranimo forcePieceDown(Tetranimo piece, Board board)
 	while (!checkCollision(movePiece(droppedPiece, PieceDirection::DOWN).points, board)) { //If the piece being moved down would not cause a collision.
 		droppedPiece = movePiece(droppedPiece, PieceDirection::DOWN);
 	}
+	
 	return droppedPiece;
 }
 
@@ -479,6 +559,9 @@ void breakCompletedRow(Game* game, int row)
 
 	for (i = 0; i < BOARD_WIDTH; i++)
 		game->board[row][i].occupyingPiece = empty;
+
+	//play sound effect
+	Mix_PlayChannel(-1, SFX_RowClear, 0);
 	game->totalLinesCleared++;
 	game->score += 40 * (game->level);
 
@@ -547,6 +630,7 @@ void holdPiece(Game* game)
 		game->pieceIsActive = FALSE;
 
 		game->pieceIsHeld = TRUE;
+
 	}
 
 	//If a piece is held already
@@ -572,6 +656,9 @@ void holdPiece(Game* game)
 		drawPiece(game->activePiece, game->board);
 
 	}
+
+	//play sound effect
+	Mix_PlayChannel(-1, SFX_PieceHold, 0);
 }
 
 /*The game needs to automatically move the active piece down And place it if the player runs out of time to move it.
@@ -651,7 +738,7 @@ void drawUI(Game game) {
 	scoreFont = Gfx::loadFromRenderedText(scoreTextBuffer, textColor);
 
 	Gfx::render(UI_ScoreBox.x + UI_ScoreBox.w / 2 - scoreFont.w / 2, //Center text Horizontally in box
-		UI_ScoreBox.y + UI_ScoreBox.h / 2 + 4, //Center text Vertically in box
+		UI_ScoreBox.y + UI_ScoreBox.h / 2 , //Center text Vertically in box
 		scoreFont);
 
 	//Render Level Box
@@ -664,7 +751,7 @@ void drawUI(Game game) {
 
 	//GOOD FUCKING LORD THIS IS A MESS RIGHT NOW
 	Gfx::render(UI_LevelBox.x + (levelBox.w / 2) - (scoreFont.w / 2), //Center text Horizontally in box
-		UI_LevelBox.y + levelBox.h / 2 + 10, //Center text Vertically in box
+		UI_LevelBox.y + (UI_LevelBox.h / 2), //Center text Vertically in box
 		scoreFont);
 
 
@@ -755,7 +842,7 @@ void drawAnimation(Game* game, int frameTimeDiff)
         {
             //Set the flags back to 0;
             animationTime = 0;
-            animationPlaying = FALSE;
+            //animationPlaying = FALSE;
 
             for(int i = 0; i < MAX_ROWS_BROKEN; i++)
                 if(rowBreakAnimationFlag[i] > 0)
@@ -763,6 +850,7 @@ void drawAnimation(Game* game, int frameTimeDiff)
                     dropRow(game, rowBreakAnimationFlag[i]); /* call dropRow on the appropriate rows */
                     rowBreakAnimationFlag[i] = -1; /* set the rowBreakAnimationFlag array back to the default -1s */ 
                 }
+			animationPlaying = FALSE;
         }
         //If not, keep track of how long the animation has been running
         else if(animationTime > 0)

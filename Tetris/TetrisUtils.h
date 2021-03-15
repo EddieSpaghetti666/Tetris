@@ -185,6 +185,7 @@ Tetranimo spawnTetranimo();
 bool rowCompleted(Board board, int row);
 void drawUI(Game);
 void drawBoard(Game);
+bool moved(Tetranimo, Tetranimo);
 
 Point* getPointsRelativeToPivot(Point points[], Point pivot) {
     int pivot_x = pivot.x;
