@@ -25,6 +25,15 @@ const SDL_Rect boardViewPort = { CENTER(SCREEN_WIDTH, BOARD_PIXEL_WIDTH) , CENTE
 const SDL_Rect scoreHoldViewPort = { 0, 0, ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2), SCREEN_HEIGHT };
 const SDL_Rect nextPiecesViewPort = { ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2) + BOARD_PIXEL_WIDTH, 0, scoreHoldViewPort.w + boardViewPort.w, SCREEN_HEIGHT };
 
+
+/* animation stuff */
+int rowBreakAnimationFlag[4] = {-1, -1, -1, -1 };
+void animateRowBreak(int);
+void drawAnimation(Game*, int);
+#define ANIMATION_LENGTH 2000 / 30 /* I don't know what this number means */
+int animationTime = 0;
+bool animationPlaying = FALSE;
+
 //These are the positions of the full piece images on the sprite sheet.
 SDL_Rect fullPieceClips[7] = { {1, 249, 64, 16}, //Line
 									 {145, 305, 32, 32}, //Square
@@ -65,7 +74,7 @@ Texture scoreBox;
 Texture nextPiecesBox;
 Texture levelBox;
 Texture scoreFont;
-
+Texture whiteSquare;
 
 int main(int argc, char* argv[]) {
 
@@ -109,18 +118,32 @@ int main(int argc, char* argv[]) {
 		frameTimeDiff = (int)1000 * (frameEnd.time - frameStart.time) + (frameEnd.millitm - frameStart.millitm);
 
 		if (frameTimeDiff > FRAME_RATE) {
-			//Clear screen
+            
+            //Clear screen
 			Gfx::clearRenderer(gRenderer);
-			//Update Game state.
-			update(playerAction, &game);
+
+            
 			//Draw things
 			drawUI(game);
 			drawBoard(game);
 
+
+            //Draw an animation if there is one to draw
+            drawAnimation(&game, frameTimeDiff);
+            
+			//Update Game state (unless an animation is playing)
+            if(!animationPlaying)
+                update(playerAction, &game);
+
+
+
+
 			//Present what renderer drew
 			Gfx::renderPresent(gRenderer);
-
+            
 			ftime(&frameStart);
+
+            playerAction = PlayerAction::IDLE;
 		}
 	}
 	/*End of Game loop*/
@@ -189,6 +212,7 @@ void loadMedia() {
 	scoreBox = Gfx::loadTextureFromFile("Score.png");
 	nextPiecesBox = Gfx::loadTextureFromFile("NextSmall.png");
 	levelBox = Gfx::loadTextureFromFile("Level.png");
+    whiteSquare = Gfx::loadTextureFromFile("White_Square.png");
 }
 
 /*This function initializes the necissary Game state and Board. */
@@ -493,13 +517,17 @@ void sweepBoard(Game* game)
 	int nonEmptySquares = 0;
 	for (int row = 0; row < BOARD_HEIGHT; row++) {
 		if (rowCompleted(game->board, row))
+        {
+            rowBreakAnimationFlag[rowIndex] = row;
 			completedRows[rowIndex++] = row;
+                
+        }
 	}
 
 	for (int i = 0; i < 4; i++) {
 		if (completedRows[i] != -1) {
 			breakCompletedRow(game, completedRows[i]);
-			dropRow(game, completedRows[i]);
+            //NOTE: Moved dropRow() to the animation function
 		}
 	}
 }
@@ -707,6 +735,60 @@ void drawBoard(Game game)
 
 		}
 	}
+
+
 }
 
 
+/* animateRowBreak: Animates a given row break. */
+void animateRowBreak(int row)
+{
+    //TODO: setAlpha is garbage.
+    Gfx::setAlpha(whiteSquare, 0.5);
+    for(int i = 0; i < BOARD_WIDTH; i++)
+    {
+        Gfx::render((i * SQUARE_PIXEL_SIZE) + 5, (row * SQUARE_PIXEL_SIZE) + 5, whiteSquare);
+    }    
+
+}
+
+/* drawAnimation: handles animation logic and draws the correct animation. There's only a row breaking animation right now. */
+void drawAnimation(Game* game, int frameTimeDiff)
+{
+    #define MAX_ROWS_BROKEN 4
+
+    //If the animation flag is set
+    if(rowBreakAnimationFlag[0] > 0)
+    {
+        //Loop through the array to see what rows need to be animated
+        for(int i = 0; i < MAX_ROWS_BROKEN; i++)
+            if(rowBreakAnimationFlag[i] > 0)
+                animateRowBreak(rowBreakAnimationFlag[i]); /* call animateRowBreak on a valid row */
+        
+        //Begin the animation
+        if(animationTime == 0 && animationPlaying == FALSE)
+        {
+            animationTime = ANIMATION_LENGTH;
+            animationPlaying = TRUE;
+        }
+        //If the animation has run its course
+        else if(animationTime <= 0 && animationPlaying == TRUE)
+        {
+            //Set the flags back to 0;
+            animationTime = 0;
+            animationPlaying = FALSE;
+
+            for(int i = 0; i < MAX_ROWS_BROKEN; i++)
+                if(rowBreakAnimationFlag[i] > 0)
+                {
+                    dropRow(game, rowBreakAnimationFlag[i]); /* call dropRow on the appropriate rows */
+                    rowBreakAnimationFlag[i] = -1; /* set the rowBreakAnimationFlag array back to the default -1s */ 
+                }
+        }
+        //If not, keep track of how long the animation has been running
+        else if(animationTime > 0)
+            animationTime -= frameTimeDiff;
+    }
+
+
+}
