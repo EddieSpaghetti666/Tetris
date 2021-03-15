@@ -9,50 +9,8 @@
 #include <string>
 #include <SDL_ttf.h>
 #include "Gfx.cpp"
+#include <set>
 
-#define CENTER(x,y) (x - y) / 2
-
-
-
-const int SQUARE_PIXEL_SIZE = 16;
-
-const int BORDER_PADDING = 10; //There are 10 pixels of padding for the board border.
-
-const int BOARD_PIXEL_WIDTH = BOARD_WIDTH * SQUARE_PIXEL_SIZE + BORDER_PADDING;
-const int BOARD_PIXEL_HEIGHT = BOARD_HEIGHT * SQUARE_PIXEL_SIZE + BORDER_PADDING;
-
-const SDL_Rect boardViewPort = { CENTER(SCREEN_WIDTH, BOARD_PIXEL_WIDTH) , CENTER(SCREEN_HEIGHT, BOARD_PIXEL_HEIGHT), BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT }; //This centers the board.
-const SDL_Rect scoreHoldViewPort = { 0, 0, ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2), SCREEN_HEIGHT };
-const SDL_Rect nextPiecesViewPort = { ((SCREEN_WIDTH - BOARD_PIXEL_WIDTH) / 2) + BOARD_PIXEL_WIDTH, 0, scoreHoldViewPort.w + boardViewPort.w, SCREEN_HEIGHT };
-
-//These are the positions of the full piece images on the sprite sheet.
-SDL_Rect fullPieceClips[7] = { {1, 249, 64, 16}, //Line
-									 {145, 305, 32, 32}, //Square
-									 {9, 177, 48, 32}, //J
-									 {9, 113, 48, 32}, //L
-									 {9, 305, 48, 32}, //S
-									 {9, 49, 48, 32}, //T
-									 {137, 241, 48, 32}, //Z 
-};
-
-//These are the positions of individal sprite blocks used to draw on the board.
-SDL_Rect spriteClips[7] = { {1, 249, 16, 16}, //Line
-							{145, 305, 16, 16}, //Square
-							{9, 177, 16, 16}, //J
-							{9, 129, 16, 16}, //L
-							{25, 305, 16, 16}, //S
-							{9, 65, 16, 16}, //T
-							{153, 241, 16, 16}, //Z 
-};
-
-SDL_Rect ghostSpriteClips[7] = { {1, 249, 16, 16}, //Line
-								 {145, 321, 16, 16}, //Square
-								 {9, 177, 16, 16}, //J
-								 {9, 129, 16, 16}, //L
-								 {25, 305, 16, 16}, //S
-								 {9, 65, 16, 16}, //T
-								 {137, 241, 16, 16}, //Z 
-};
 
 //NOT GOOD.
 Texture boardTile;
@@ -66,6 +24,11 @@ Texture nextPiecesBox;
 Texture levelBox;
 Texture scoreFont;
 
+//Also not good.
+UIComponent UI_HeldBox;
+UIComponent UI_ScoreBox;
+UIComponent UI_LevelBox;
+UIComponent UI_NextPiecesBox;
 
 int main(int argc, char* argv[]) {
 
@@ -111,8 +74,10 @@ int main(int argc, char* argv[]) {
 		if (frameTimeDiff > FRAME_RATE) {
 			//Clear screen
 			Gfx::clearRenderer(gRenderer);
+
 			//Update Game state.
 			update(playerAction, &game);
+
 			//Draw things
 			drawUI(game);
 			drawBoard(game);
@@ -120,6 +85,7 @@ int main(int argc, char* argv[]) {
 			//Present what renderer drew
 			Gfx::renderPresent(gRenderer);
 
+			playerAction = PlayerAction::IDLE;
 			ftime(&frameStart);
 		}
 	}
@@ -189,6 +155,12 @@ void loadMedia() {
 	scoreBox = Gfx::loadTextureFromFile("Score.png");
 	nextPiecesBox = Gfx::loadTextureFromFile("NextSmall.png");
 	levelBox = Gfx::loadTextureFromFile("Level.png");
+
+	//Initialize the UI_Compenents with their textures and positions
+	UI_HeldBox = { heldBox , scoreHoldViewPort.w - 100, CENTER(scoreHoldViewPort.h,BOARD_PIXEL_HEIGHT) , heldBox.w, heldBox.h };
+	UI_ScoreBox = { scoreBox , UI_HeldBox.x, UI_HeldBox.y + heldBox.h + 5, scoreBox.w, scoreBox.h };
+	UI_NextPiecesBox = { nextPiecesBox , 5, CENTER(SCREEN_HEIGHT , BOARD_PIXEL_HEIGHT) + 24, nextPiecesBox.w, nextPiecesBox.h };
+	UI_LevelBox = { levelBox , UI_HeldBox.x, UI_ScoreBox.y + scoreBox.h + 5, levelBox.w, levelBox.h };
 }
 
 /*This function initializes the necissary Game state and Board. */
@@ -477,9 +449,12 @@ void placeActivePiece(Game* game)
 
 void breakCompletedRow(Game* game, int row)
 {
+	Tetranimo empty;
+	empty.type = TetranimoType::EMPTY;
 	int i;
+
 	for (i = 0; i < BOARD_WIDTH; i++)
-		game->board[row][i].occupyingPiece.type = TetranimoType::EMPTY;
+		game->board[row][i].occupyingPiece = empty;
 	game->totalLinesCleared++;
 	game->score += 40 * (game->level);
 
@@ -498,6 +473,8 @@ void sweepBoard(Game* game)
 
 	for (int i = 0; i < 4; i++) {
 		if (completedRows[i] != -1) {
+			
+			
 			breakCompletedRow(game, completedRows[i]);
 			dropRow(game, completedRows[i]);
 		}
@@ -507,6 +484,7 @@ void sweepBoard(Game* game)
 /* Starting from a given row, Move every piece in each row above it down one row. This should be called every time a row is completed.*/
 void dropRow(Game* game, int row)
 {
+	
 	for (int rowAbove = row - 1; rowAbove > 0; rowAbove--) {
 		for (int col = 0; col < BOARD_WIDTH; col++) {
 			game->board[rowAbove + 1][col].occupyingPiece = game->board[rowAbove][col].occupyingPiece;
@@ -614,7 +592,7 @@ void drawUI(Game game) {
 
 	//Render Hold Piece Box
 	Gfx::setViewPort(gRenderer, &scoreHoldViewPort);
-	Gfx::render(scoreHoldViewPort.w - 100, (scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2, heldBox); //IDK WTF THIS IS ANY MORE IM JUST TYPING RANDOM NUMBERS!!
+	Gfx::render(UI_HeldBox.x, UI_HeldBox.y, UI_HeldBox.texture); //IDK WTF THIS IS ANY MORE IM JUST TYPING RANDOM NUMBERS!!
 
 	//Render the held piece if there is one
 	TetranimoType heldPiece = game.heldPiece.type;
@@ -626,15 +604,15 @@ void drawUI(Game game) {
 
 		//TODO: setAlpha is garbage.
 		Gfx::setAlpha(spriteSheet, 0.5);
-		Gfx::render(scoreHoldViewPort.w - 100 + (heldBox.w / 2 - pieceWidthOffset), // Horizontal center of held piece box
-			(scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2 + (heldBox.h / 2 - pieceHeightOffset), // Vertical center of held piece box
+		Gfx::render(UI_HeldBox.x + (UI_HeldBox.w / 2 - pieceWidthOffset), // Horizontal center of held piece box
+			UI_HeldBox.y + (UI_HeldBox.h / 2 - pieceHeightOffset), // Vertical center of held piece box
 			spriteSheet,
 			&fullPieceClips[heldPiece]);
 		Gfx::setAlpha(spriteSheet, 1.0);
 	}
 
 	//Render Score Box
-	Gfx::render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + 5, scoreBox);
+	Gfx::render(UI_ScoreBox.x, UI_ScoreBox.y, UI_ScoreBox.texture);
 
 	//TODO: Try to render score with "blended" text mode maybe to make it look less pixelated?
 
@@ -644,12 +622,12 @@ void drawUI(Game game) {
 	SDL_Color textColor = { 0xFF, 0xFF, 0xFF }; //White
 	scoreFont = Gfx::loadFromRenderedText(scoreTextBuffer, textColor);
 
-	Gfx::render(scoreHoldViewPort.w - 100 + scoreBox.w / 2 - scoreFont.w / 2, //Center text Horizontally in box
-		((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + scoreBox.h / 2 + 4, //Center text Vertically in box
+	Gfx::render(UI_ScoreBox.x + UI_ScoreBox.w / 2 - scoreFont.w / 2, //Center text Horizontally in box
+		UI_ScoreBox.y + UI_ScoreBox.h / 2 + 4, //Center text Vertically in box
 		scoreFont);
 
 	//Render Level Box
-	Gfx::render(scoreHoldViewPort.w - 100, ((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + scoreBox.h + 10, levelBox);
+	Gfx::render(UI_LevelBox.x, UI_LevelBox.y, UI_LevelBox.texture);
 
 	//Render the level as Text
 	char levelTextBuffer[10];
@@ -657,15 +635,15 @@ void drawUI(Game game) {
 	scoreFont = Gfx::loadFromRenderedText(levelTextBuffer, textColor);
 
 	//GOOD FUCKING LORD THIS IS A MESS RIGHT NOW
-	Gfx::render(scoreHoldViewPort.w - 100 + levelBox.w / 2 - scoreFont.w / 2, //Center text Horizontally in box
-		((scoreHoldViewPort.h - BOARD_PIXEL_HEIGHT) / 2) + heldBox.h + scoreBox.h + levelBox.h / 2 + 10, //Center text Vertically in box
+	Gfx::render(UI_LevelBox.x + (levelBox.w / 2) - (scoreFont.w / 2), //Center text Horizontally in box
+		UI_LevelBox.y + levelBox.h / 2 + 10, //Center text Vertically in box
 		scoreFont);
 
 
 
 	//Render Next Pieces box
 	Gfx::setViewPort(gRenderer, &nextPiecesViewPort);
-	Gfx::render(4, (SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2 + 24, nextPiecesBox); // +24 is because I feel like it looks better further down. IDK why.
+	Gfx::render(UI_NextPiecesBox.x, UI_NextPiecesBox.y, UI_NextPiecesBox.texture); // +24 is because I feel like it looks better further down. IDK why.
 
 	//Render Next Pieces
 	std::queue<Tetranimo> nextPieces = game.upcomingPieces;
@@ -678,8 +656,8 @@ void drawUI(Game game) {
 	int pieceHeightOffset = type == TetranimoType::LINE ? 0 : fullPieceClips[type].h / 4;
 
 	Gfx::setAlpha(spriteSheet, .75);
-	Gfx::render(3 + nextPiecesBox.w / 2 - pieceWidthOffset, // Horizontal center of next piece box
-		((SCREEN_HEIGHT - BOARD_PIXEL_HEIGHT) / 2 + 24) + (nextPiecesBox.h / 2) - pieceHeightOffset, // Vorizontal center of next piece box
+	Gfx::render(UI_NextPiecesBox.x + UI_NextPiecesBox.w / 2 - pieceWidthOffset, // Horizontal center of next piece box
+		UI_NextPiecesBox.y + UI_NextPiecesBox.h / 2 - pieceHeightOffset, // Vorizontal center of next piece box
 		spriteSheet,
 		&fullPieceClips[type]);
 	Gfx::setAlpha(spriteSheet, 1.0);
@@ -698,6 +676,7 @@ void drawBoard(Game game)
 	for (int i = 0; i < BOARD_HEIGHT; i++) {
 		for (int j = 0; j < BOARD_WIDTH; j++) {
 			Tetranimo piece = game.board[i][j].occupyingPiece;
+	
 			if (piece.type == TetranimoType::EMPTY)
 				Gfx::render((j * SQUARE_PIXEL_SIZE) + 5, (i * SQUARE_PIXEL_SIZE) + 5, boardTile); //NOTE: The +5's are to account for the border width. Holy shit this is ugly.
 			else if (piece.state == TetranimoState::GHOST)
