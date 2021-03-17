@@ -145,16 +145,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Board.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Sound.cpp" />
+    <ClCompile Include="Tetranimo.cpp" />
     <ClCompile Include="Tetris.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="Board.h" />
+    <ClInclude Include="Game.h" />
     <ClInclude Include="Gfx.cpp" />
+    <ClInclude Include="Gfx.h" />
+    <ClInclude Include="Sound.h" />
+    <ClInclude Include="Tetranimo.h" />
     <ClInclude Include="TetrisUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="BGBorder.png" />
     <Image Include="BoardTile2.png" />
     <Image Include="Board_Tile.png" />
+    <Image Include="Ghost_Sprites.png" />
     <Image Include="Hold.png" />
     <Image Include="Level.png" />
     <Image Include="NextSmall.png" />

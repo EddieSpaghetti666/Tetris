@@ -16,9 +16,27 @@
     <Filter Include="Resource Files\SoundEffects">
       <UniqueIdentifier>{ef1cbde7-e722-4392-8b14-95283569891f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Textures">
+      <UniqueIdentifier>{ce533ad8-0fc9-49e6-999f-1c2c548ea062}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tetris.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tetranimo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Board.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,34 +47,55 @@
     <ClInclude Include="Gfx.cpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Tetranimo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Board.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Board_Tile.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Tetris_BG.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="Tetris_Sprites.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="BoardTile2.png">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="BGBorder.png">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Board_Tile.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="BoardTile2.png">
+      <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="Hold.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Score.png">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="Level.png">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="NextSmall.png">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Score.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Tetris_BG.jpg">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Ghost_Sprites.png">
+      <Filter>Resource Files\Textures</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
