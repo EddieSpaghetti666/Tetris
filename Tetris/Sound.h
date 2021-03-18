@@ -11,7 +11,9 @@ enum class SFX {
 	SINGLE,
 	DOUBLE,
 	TRIPLE,
-	TETRIS
+	TETRIS,
+	SOFT_DROP,
+	ROTATE
 };
 
 void loadSounds();

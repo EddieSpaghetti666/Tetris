@@ -100,7 +100,27 @@ void update(PlayerAction playerAction, Game& game, int frameTime) {
 
 	if (!checkCollision(movedPiece.points, game.board) && moved(game.activePiece, movedPiece)){
 		game.activePiece = movedPiece;
-		playSFX(SFX::PIECE_MOVE);
+		//play SFX
+		switch (playerAction) {
+		case PlayerAction::MOVE_DOWN: {
+			playSFX(SFX::SOFT_DROP);
+			break;
+		}
+
+		case PlayerAction::ROTATE_LEFT: {
+			playSFX(SFX::ROTATE);
+			break;
+		}
+		case PlayerAction::ROTATE_RIGHT: {
+			playSFX(SFX::ROTATE);
+			break;
+		}
+		default: {
+			playSFX(SFX::PIECE_MOVE);
+			break;
+		}
+		}
+		
 	}
 	
 
@@ -178,7 +198,7 @@ void updateGhostPiece(Game * game) {
 bool handleGravity(Game& game, int frameTime) {
 	bool placePiece = false;
 
-	game.level = 1 + game.totalLinesCleared / 1;
+	game.level = 1 + game.totalLinesCleared / 10;
 	//If you collided with something falling due to gravity, you ran out of time so the game should place the piece for you.
 	if (game.framesSinceLastDrop == game.gravity) {
 

@@ -14,13 +14,16 @@ Mix_Chunk* SFX_Single = NULL;
 Mix_Chunk* SFX_Double = NULL;
 Mix_Chunk* SFX_Triple = NULL;
 Mix_Chunk* SFX_Tetris = NULL;
+Mix_Chunk* SFX_Rotate = NULL;
+Mix_Chunk* SFX_SoftDrop = NULL;
+
 
 
 std::map<SFX, Mix_Chunk*> SOUND_EFFECTS;
 
 void loadSounds() {
 	/* Load chune */
-	gMusic = loadMusicFromFile("Tetris.mp3");
+	gMusic = loadMusicFromFile("Music\\Tetris.mp3");
 	/* Load sound effects */
 	SFX_RowClear = Mix_LoadWAV("SoundEffects\\SFX_RowClear.wav");
 	SFX_PieceMove = Mix_LoadWAV("SoundEffects\\SFX_Move.wav");
@@ -30,6 +33,8 @@ void loadSounds() {
 	SFX_Double = Mix_LoadWAV("SoundEffects\\SFX_Double.wav");
 	SFX_Triple = Mix_LoadWAV("SoundEffects\\SFX_Triple.wav");
 	SFX_Tetris = Mix_LoadWAV("SoundEffects\\SFX_Tetris.wav");
+	SFX_Rotate = Mix_LoadWAV("SoundEffects\\SFX_Rotate.wav");
+	SFX_SoftDrop = Mix_LoadWAV("SoundEffects\\SFX_SoftDrop.wav");
 	
 
 	SOUND_EFFECTS.insert({ SFX::ROW_CLEAR, SFX_RowClear });
@@ -40,8 +45,12 @@ void loadSounds() {
 	SOUND_EFFECTS.insert({ SFX::DOUBLE, SFX_Double });
 	SOUND_EFFECTS.insert({ SFX::TRIPLE, SFX_Triple });
 	SOUND_EFFECTS.insert({ SFX::TETRIS, SFX_Tetris });
+	SOUND_EFFECTS.insert({ SFX::ROTATE, SFX_Rotate });
+	SOUND_EFFECTS.insert({ SFX::SOFT_DROP, SFX_SoftDrop });
 
 	//Mixing Volume of other SFX
+	setSFXVolume(SFX::ROTATE, 10);
+	setSFXVolume(SFX::SOFT_DROP, 10);
 	setSFXVolume(SFX::PIECE_MOVE, 10);
 	setSFXVolume(SFX::HARD_DROP, 10);
 	setSFXVolume(SFX::PIECE_HOLD, 10);

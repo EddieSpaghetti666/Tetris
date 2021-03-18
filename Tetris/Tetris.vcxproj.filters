@@ -17,7 +17,13 @@
       <UniqueIdentifier>{ef1cbde7-e722-4392-8b14-95283569891f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\Textures">
-      <UniqueIdentifier>{ce533ad8-0fc9-49e6-999f-1c2c548ea062}</UniqueIdentifier>
+      <UniqueIdentifier>{8ca6fcfd-f23f-4595-995d-588a736aab1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Fonts">
+      <UniqueIdentifier>{3970db2e-fcd3-4b18-86f8-5eb593fd31b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Music">
+      <UniqueIdentifier>{02fbe78f-445f-4b98-8f66-142ef6d37215}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -67,49 +73,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Tetris_Sprites.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="BGBorder.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="Board_Tile.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="BoardTile2.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="Hold.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="Level.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="NextSmall.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="Score.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="Tetris_BG.jpg">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="Ghost_Sprites.png">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <Font Include="ScoreFont.ttf">
-      <Filter>Resource Files</Filter>
-    </Font>
-  </ItemGroup>
-  <ItemGroup>
-    <Media Include="Tetris.mp3">
-      <Filter>Resource Files</Filter>
-    </Media>
-    <Media Include="Tetris_theme.ogg.mp3">
-      <Filter>Resource Files</Filter>
-    </Media>
     <Media Include="SoundEffects\SFX_RowClear.wav">
       <Filter>Resource Files\SoundEffects</Filter>
     </Media>
@@ -134,5 +97,57 @@
     <Media Include="SoundEffects\SFX_Move.wav">
       <Filter>Resource Files\SoundEffects</Filter>
     </Media>
+    <Media Include="SoundEffects\SFX_Rotate.wav">
+      <Filter>Resource Files\SoundEffects</Filter>
+    </Media>
+    <Media Include="SoundEffects\SFX_SoftDrop.wav">
+      <Filter>Resource Files\SoundEffects</Filter>
+    </Media>
+    <Media Include="Music\Tetris.mp3">
+      <Filter>Resource Files\Music</Filter>
+    </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\BGBorder.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Board_Tile.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\BoardTile2.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Ghost_Sprites.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Hold.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Level.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\next.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\NextSmall.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Score.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Tetris_BG.jpg">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Tetris_Sprites.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\White_Square.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="fonts\ScoreFont.ttf">
+      <Filter>Resource Files\Fonts</Filter>
+    </Font>
   </ItemGroup>
 </Project>

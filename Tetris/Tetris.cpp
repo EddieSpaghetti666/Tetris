@@ -186,15 +186,15 @@ void loadMedia() {
 	loadSounds();
 	
 	//TODO: handle textures in a better way than this probably.
-	boardTile = Gfx::loadTextureFromFile("BoardTile2.png");
-	spriteSheet = Gfx::loadTextureFromFile("Tetris_Sprites.png");
-	ghostSpriteSheet = Gfx::loadTextureFromFile("Ghost_Sprites.png");
-	background = Gfx::loadTextureFromFile("Tetris_BG.jpg");
-	boardBorder = Gfx::loadTextureFromFile("BGBorder.png");
-	heldBox = Gfx::loadTextureFromFile("Hold.png");
-	scoreBox = Gfx::loadTextureFromFile("Score.png");
-	nextPiecesBox = Gfx::loadTextureFromFile("NextSmall.png");
-	levelBox = Gfx::loadTextureFromFile("Level.png");
+	boardTile = Gfx::loadTextureFromFile("Textures\\BoardTile2.png");
+	spriteSheet = Gfx::loadTextureFromFile("Textures\\Tetris_Sprites.png");
+	ghostSpriteSheet = Gfx::loadTextureFromFile("Textures\\Ghost_Sprites.png");
+	background = Gfx::loadTextureFromFile("Textures\\Tetris_BG.jpg");
+	boardBorder = Gfx::loadTextureFromFile("Textures\\BGBorder.png");
+	heldBox = Gfx::loadTextureFromFile("Textures\\Hold.png");
+	scoreBox = Gfx::loadTextureFromFile("Textures\\Score.png");
+	nextPiecesBox = Gfx::loadTextureFromFile("Textures\\NextSmall.png");
+	levelBox = Gfx::loadTextureFromFile("Textures\\Level.png");
 
 	//Initialize the UI_Compenents with their textures and positions
 	UI_HeldBox = { heldBox , scoreHoldViewPort.w - 100, CENTER(scoreHoldViewPort.h,BOARD_PIXEL_HEIGHT) , heldBox.w, heldBox.h };
@@ -202,7 +202,7 @@ void loadMedia() {
 	UI_NextPiecesBox = { nextPiecesBox , 5, CENTER(SCREEN_HEIGHT , BOARD_PIXEL_HEIGHT) + 24, nextPiecesBox.w, nextPiecesBox.h };
 	UI_LevelBox = { levelBox , UI_HeldBox.x, UI_ScoreBox.y + scoreBox.h + 5, levelBox.w, levelBox.h };
 
-	whiteSquare = Gfx::loadTextureFromFile("White_Square.png");
+	whiteSquare = Gfx::loadTextureFromFile("Textures\\White_Square.png");
 }
 
 

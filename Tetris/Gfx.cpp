@@ -61,7 +61,7 @@ bool Gfx::initGfx()
 		success = false;
 	}
 
-	gFont = TTF_OpenFont("ScoreFont.ttf", 12);
+	gFont = TTF_OpenFont("Fonts\\ScoreFont.ttf", 12);
 	if (gFont == NULL)
 	{
 		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
