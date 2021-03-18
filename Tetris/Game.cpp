@@ -79,23 +79,11 @@ void update(PlayerAction playerAction, Game& game, int frameTime) {
 		break;
 	}
 	case PlayerAction::ROTATE_RIGHT: {
-		movedPiece = rotatePiece(game.activePiece, true); //True, because you are rotating clockwise.
-		if (checkCollision(movedPiece.points, game.board)) {
-			movedPiece = fixRotation(movedPiece, game.board, true);
-		}
-		else {
-			movedPiece.orientation = getNewOrientation(movedPiece.orientation, true);
-		}
+		movedPiece = rotatePiece(game.activePiece, game.board, true); //True, because you are rotating clockwise.
 		break;
 	}
 	case PlayerAction::ROTATE_LEFT: {
-		movedPiece = rotatePiece(game.activePiece, false); //False, you are rotating anticlockwise
-		if (checkCollision(movedPiece.points, game.board)) {
-			movedPiece = fixRotation(movedPiece, game.board, false);
-		}
-		else {
-			movedPiece.orientation = getNewOrientation(movedPiece.orientation, true);
-		}
+		movedPiece = rotatePiece(game.activePiece, game.board, false); //False, you are rotating anticlockwise
 		break;
 	}
 	case PlayerAction::FORCE_DOWN: {
@@ -110,16 +98,15 @@ void update(PlayerAction playerAction, Game& game, int frameTime) {
 	}
 	}
 
-	if (!checkCollision(movedPiece.points, game.board)) {
+	if (!checkCollision(movedPiece.points, game.board) && moved(game.activePiece, movedPiece)){
 		game.activePiece = movedPiece;
+		playSFX(SFX::PIECE_MOVE);
 	}
-	else {
-		printf("Failed to move");
-	}
+	
 
 
 
-	//handleGravity(game, frameTime);
+	handleGravity(game, frameTime);
 	if (game.activePiece.locking)
 		game.activePiece.lockDelay--;
 	updateGhostPiece(&game);

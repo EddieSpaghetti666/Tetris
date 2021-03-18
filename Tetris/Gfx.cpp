@@ -109,11 +109,15 @@ Texture Gfx::loadTextureFromFile(std::string filePath) {
 	return result;
 }
 
-Texture Gfx::loadFromRenderedText(std::string textureText, SDL_Color textColor)
+Texture Gfx::loadFromRenderedText(std::string textureText, SDL_Color textColor, bool blended)
 {
 	Texture result;
 	//Render text surface
-	SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
+	SDL_Surface* textSurface = NULL;
+	if(blended)
+		textSurface = TTF_RenderText_Blended(gFont, textureText.c_str(), textColor);
+	else
+		SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
 	if (textSurface == NULL)
 	{
 		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());

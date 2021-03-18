@@ -7,7 +7,11 @@ enum class SFX {
 	ROW_CLEAR,
 	HARD_DROP,
 	PIECE_HOLD,
-	PIECE_MOVE
+	PIECE_MOVE,
+	SINGLE,
+	DOUBLE,
+	TRIPLE,
+	TETRIS
 };
 
 void loadSounds();

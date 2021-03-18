@@ -56,13 +56,13 @@
     <ClInclude Include="Gfx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sound.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -113,13 +113,25 @@
     <Media Include="SoundEffects\SFX_RowClear.wav">
       <Filter>Resource Files\SoundEffects</Filter>
     </Media>
-    <Media Include="SoundEffects\SFX_PieceHardDrop.wav">
+    <Media Include="SoundEffects\SFX_Double.wav">
       <Filter>Resource Files\SoundEffects</Filter>
     </Media>
-    <Media Include="SoundEffects\SFX_PieceHold.wav">
+    <Media Include="SoundEffects\SFX_Single.wav">
       <Filter>Resource Files\SoundEffects</Filter>
     </Media>
-    <Media Include="SoundEffects\SFX_PieceMoveLR.wav">
+    <Media Include="SoundEffects\SFX_Tetris.wav">
+      <Filter>Resource Files\SoundEffects</Filter>
+    </Media>
+    <Media Include="SoundEffects\SFX_Triple.wav">
+      <Filter>Resource Files\SoundEffects</Filter>
+    </Media>
+    <Media Include="SoundEffects\SFX_HardDrop.wav">
+      <Filter>Resource Files\SoundEffects</Filter>
+    </Media>
+    <Media Include="SoundEffects\SFX_Hold.wav">
+      <Filter>Resource Files\SoundEffects</Filter>
+    </Media>
+    <Media Include="SoundEffects\SFX_Move.wav">
       <Filter>Resource Files\SoundEffects</Filter>
     </Media>
   </ItemGroup>

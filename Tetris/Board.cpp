@@ -71,8 +71,8 @@ void placeActivePiece(Game& game)
 
 void handleFullRows(Game& game) {
 	int* rows = completedRows(game.board);
-	int i = 0;
-	for (int i = 0; i < 4; i++) {
+	int i;
+	for (i = 0; i < 4; i++) {
 		if (rows[i] < 0)
 			break;
 		breakCompletedRow(game, rows[i]);
@@ -80,7 +80,24 @@ void handleFullRows(Game& game) {
 	}
 	free(rows);
 	//play sound effect
-	playSFX(SFX::ROW_CLEAR);
+	switch (i) {
+	case 1: 
+		playSFX(SFX::SINGLE);
+		break;
+	case 2:
+		playSFX(SFX::DOUBLE);
+		break;
+	case 3:
+		playSFX(SFX::TRIPLE);
+		break;
+	case 4:
+		playSFX(SFX::TETRIS);
+		break;
+	default:
+		break;
+	}
+
+
 }
 
 /* checkCollision: checks to see if the piece collided with the edges

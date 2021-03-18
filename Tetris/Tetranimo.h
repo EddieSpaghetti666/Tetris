@@ -58,6 +58,10 @@ const StartingPos STARTING_COORDS[7] = {
     { {4,0}, {5,0}, {5,1}, {6,1} }  // Z
 };
 
+//SRS stuff
+typedef std::pair<int, int> Kick;
+typedef std::pair<TetranimoOrientation, TetranimoOrientation> Rotation;
+
 /* Compares position of piece to see if it moved */
 bool moved(Tetranimo originalPos, Tetranimo newPos);
 
@@ -65,9 +69,9 @@ bool moved(Tetranimo originalPos, Tetranimo newPos);
 Tetranimo movePiece(Tetranimo piece, PieceDirection direction);
 
 /* Rotates a piece 90 degrees */
-Tetranimo rotatePiece(Tetranimo piece, bool clockwise);
+Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise);
 
-Tetranimo fixRotation(Tetranimo piece, Board board, bool clockwise);
+bool fixRotation(Tetranimo& piece, Rotation attemptedRotation, Board board, bool clockwise);
 
 /* Creates and returns a new tetaneemo */
 Tetranimo spawnTetranimo();

@@ -178,10 +178,14 @@
     <Font Include="ScoreFont.ttf" />
   </ItemGroup>
   <ItemGroup>
-    <Media Include="SoundEffects\SFX_PieceHardDrop.wav" />
-    <Media Include="SoundEffects\SFX_PieceHold.wav" />
-    <Media Include="SoundEffects\SFX_PieceMoveLR.wav" />
+    <Media Include="SoundEffects\SFX_Double.wav" />
+    <Media Include="SoundEffects\SFX_HardDrop.wav" />
+    <Media Include="SoundEffects\SFX_Hold.wav" />
+    <Media Include="SoundEffects\SFX_Move.wav" />
     <Media Include="SoundEffects\SFX_RowClear.wav" />
+    <Media Include="SoundEffects\SFX_Single.wav" />
+    <Media Include="SoundEffects\SFX_Tetris.wav" />
+    <Media Include="SoundEffects\SFX_Triple.wav" />
     <Media Include="Tetris.mp3" />
     <Media Include="Tetris_theme.ogg.mp3" />
   </ItemGroup>

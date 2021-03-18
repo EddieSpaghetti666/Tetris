@@ -78,7 +78,7 @@ namespace Gfx{
 
 	Texture loadTextureFromFile(std::string filePath);
 
-	Texture loadFromRenderedText(std::string textureText, SDL_Color textColor);
+	Texture loadFromRenderedText(std::string textureText, SDL_Color textColor, bool blended);
 
 
 	//I'm naming this simply 'render' because we are only ever rendering textures

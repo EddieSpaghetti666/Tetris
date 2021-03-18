@@ -312,7 +312,7 @@ void drawUI(Game game) {
 	char scoreTextBuffer[100];
 	sprintf_s(scoreTextBuffer, "%d", game.score);
 	SDL_Color textColor = { 0xFF, 0xFF, 0xFF }; //White
-	scoreFont = Gfx::loadFromRenderedText(scoreTextBuffer, textColor);
+	scoreFont = Gfx::loadFromRenderedText(scoreTextBuffer, textColor, true);
 
 	Gfx::render(UI_ScoreBox.x + UI_ScoreBox.w / 2 - scoreFont.w / 2, //Center text Horizontally in box
 		UI_ScoreBox.y + UI_ScoreBox.h / 2 , //Center text Vertically in box
@@ -324,7 +324,7 @@ void drawUI(Game game) {
 	//Render the level as Text
 	char levelTextBuffer[10];
 	sprintf_s(levelTextBuffer, "%d", game.level);
-	scoreFont = Gfx::loadFromRenderedText(levelTextBuffer, textColor);
+	scoreFont = Gfx::loadFromRenderedText(levelTextBuffer, textColor, true);
 
 	//GOOD FUCKING LORD THIS IS A MESS RIGHT NOW
 	Gfx::render(UI_LevelBox.x + (levelBox.w / 2) - (scoreFont.w / 2), //Center text Horizontally in box

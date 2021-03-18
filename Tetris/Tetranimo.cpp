@@ -6,9 +6,9 @@
 #include "Board.h"
 #include <cassert>
 
-typedef std::pair<int, int> Kick;
-typedef std::pair<TetranimoOrientation, TetranimoOrientation> Rotation;
 
+
+//This Data structure holds all the information needed to perform a 'Wall-Kick' or 'Floor-Kick' according to the information on this wiki page about them: https://tetris.wiki/Super_Rotation_System
 std::map<TetranimoType, std::map<Rotation, std::vector<Kick>>> SRSKicks;
 
 /*Different Tetranimos have different pivot positions.
@@ -17,7 +17,7 @@ std::map<TetranimoType, std::map<Rotation, std::vector<Kick>>> SRSKicks;
   consult this chart to see wtf I'm talking about, this explanation sucked : https://tetris.wiki/images/thumb/1/17/SRS-true-rotations.png/300px-SRS-true-rotations.png */
 
 //Note these are indexes into the points array that the piece has so we start counting at 0.
-const std::map<TetranimoType, int> PIVOT_INDECES = { {TetranimoType::SQUARE, 2}, {TetranimoType::LINE, 1}, {TetranimoType::J, 2}, {TetranimoType::L, 1}, {TetranimoType::S, 1}, {TetranimoType::T, 1}, {TetranimoType::Z, 2} };
+const std::map<TetranimoType, int> PIVOT_INDECES = { {TetranimoType::SQUARE, 2}, {TetranimoType::LINE, 2}, {TetranimoType::J, 2}, {TetranimoType::L, 1}, {TetranimoType::S, 1}, {TetranimoType::T, 1}, {TetranimoType::Z, 2} };
 
 
 /* Compares position of piece to see if it moved */
@@ -73,13 +73,14 @@ Tetranimo movePiece(Tetranimo piece, PieceDirection direction)
 	movedPiece.orientation = piece.orientation;
 	movedPiece.pivot = newCoords[PIVOT_INDECES.find(movedPiece.type)->second];
 
+
 	return movedPiece;
 }
 
 /* Rotates a piece 90 degrees clockwise or anti-clockwise. Each piece has a list of coords on the board and a 'pivot value'.
    To rotate we get the coordinated relative to the pivot and transform them by a rotation matrix. Then return a piece with the
    new rotated coordinates. */
-Tetranimo rotatePiece(Tetranimo piece, bool clockwise) {
+Tetranimo rotatePiece(Tetranimo piece, Board board, bool clockwise) {
 	if (piece.type == TetranimoType::SQUARE) {
 		//Squares don't rotate
 		return piece;
@@ -101,32 +102,42 @@ Tetranimo rotatePiece(Tetranimo piece, bool clockwise) {
 		rotatedPoint.y = rotatedVector[1] + piece.pivot.y;
 		rotatedPoints[i] = rotatedPoint;
 	}
-
 	free(relativeToPivot);
 
-	//Now that you have the rotated points, create the 'rotated' piece and return it.
+	//Create the newly rotated piece, reset the locking Delay because you have succesfully moved it!
 	memcpy(rotatedPiece.points, rotatedPoints, sizeof(rotatedPiece.points));
 	rotatedPiece.type = piece.type;
 	rotatedPiece.state = piece.state;
 	rotatedPiece.locking = false;
 	rotatedPiece.lockDelay = LOCK_DELAY;
-
-	/*Right now I have to assign the new orientation after the rotation is proved successful, I probably should do this another way */
+	rotatedPiece.pivot = rotatedPoints[PIVOT_INDECES.find(rotatedPiece.type)->second];
 	rotatedPiece.orientation = piece.orientation;
 
-	rotatedPiece.pivot = rotatedPoints[PIVOT_INDECES.find(rotatedPiece.type)->second];
-	/* Adjust the pivot after rotating to keep pivot in the center */
-	//adjustPivot(rotatedPiece);
 
-	return rotatedPiece;
+	TetranimoOrientation newOrientation = getNewOrientation(piece.orientation, clockwise);
+
+	if (checkCollision(rotatedPiece.points, board)) {
+		//If the rotation failed, try and fix according to the SRS specifications
+		Rotation attemptedRotation = { piece.orientation, newOrientation };
+		if (fixRotation(rotatedPiece, attemptedRotation, board, clockwise)) {
+			return rotatedPiece;
+		}
+		else {
+			// The rotation couldn't be fixed, so don't rotate it at all!
+			return piece;
+		}
+	}
+	else {
+		//The rotation is good and doesn't need any kicks! assign it's new orientation and return the rotated piece
+		rotatedPiece.orientation = newOrientation;
+		return rotatedPiece;
+	}
 }
 
-Tetranimo fixRotation(Tetranimo piece, Board board, bool clockwise) {
+bool fixRotation(Tetranimo& piece, Rotation attemptedRotation, Board board, bool clockwise) {
 	if (SRSKicks.empty()) {
 		generateSRSKicks();
 	}
-	TetranimoOrientation newOrientation = getNewOrientation(piece.orientation, clockwise);
-	Rotation attemptedRotation = { piece.orientation, newOrientation };
 	std::vector<Kick> possibleKicks = SRSKicks[piece.type][attemptedRotation];
 	//Try all possible kicks and see if any of them work
 	for (int i = 0; i < possibleKicks.size(); i++) {
@@ -138,16 +149,15 @@ Tetranimo fixRotation(Tetranimo piece, Board board, bool clockwise) {
 			newPoints[j] = newPoint;
 		}
 		if (!checkCollision(newPoints, board)) {
+			//Success! you found kick which puts the piece back in bounds! assign these new points to the piece and update it's pivot and orientation.
 			memcpy(piece.points, newPoints, sizeof(piece.points));
 			piece.pivot = newPoints[PIVOT_INDECES.find(piece.type)->second];
 			piece.orientation = attemptedRotation.second;
-			return piece;
+			return true;
 		}
 	}
-	//If you didn't find anything return an empty piece for now
-	Tetranimo fail;
-	fail.type = TetranimoType::EMPTY;
-	return fail;
+	//If you didn't find anything the rotation is impossible.
+	return false;
 }
 
 
