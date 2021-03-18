@@ -64,7 +64,7 @@ void update(PlayerAction playerAction, Game& game, int frameTime) {
 	switch (playerAction) {
 	case PlayerAction::QUIT: {
 		game.state = GameState::OVER;
-		break;
+		return;
 	}
 	case PlayerAction::MOVE_LEFT: {
 		movedPiece = movePiece(game.activePiece, PieceDirection::LEFT);
@@ -80,10 +80,22 @@ void update(PlayerAction playerAction, Game& game, int frameTime) {
 	}
 	case PlayerAction::ROTATE_RIGHT: {
 		movedPiece = rotatePiece(game.activePiece, true); //True, because you are rotating clockwise.
+		if (checkCollision(movedPiece.points, game.board)) {
+			movedPiece = fixRotation(movedPiece, game.board, true);
+		}
+		else {
+			movedPiece.orientation = getNewOrientation(movedPiece.orientation, true);
+		}
 		break;
 	}
 	case PlayerAction::ROTATE_LEFT: {
 		movedPiece = rotatePiece(game.activePiece, false); //False, you are rotating anticlockwise
+		if (checkCollision(movedPiece.points, game.board)) {
+			movedPiece = fixRotation(movedPiece, game.board, false);
+		}
+		else {
+			movedPiece.orientation = getNewOrientation(movedPiece.orientation, true);
+		}
 		break;
 	}
 	case PlayerAction::FORCE_DOWN: {
@@ -98,23 +110,16 @@ void update(PlayerAction playerAction, Game& game, int frameTime) {
 	}
 	}
 
-	if (checkCollision(movedPiece.points, game.board)) {
-		if (playerAction == PlayerAction::MOVE_DOWN) { // You are touching the board or other placed pieces. So place the active piece.
-			placeActivePiece(game);
-			return;
-		}
-		else {
-			//If there was a collision revert the piece movement.
-			movedPiece = game.activePiece;
-		}
-	}
-	else if (moved(movedPiece, game.activePiece))
-	{
-		playSFX(SFX::PIECE_MOVE);
+	if (!checkCollision(movedPiece.points, game.board)) {
 		game.activePiece = movedPiece;
 	}
+	else {
+		printf("Failed to move");
+	}
 
-	handleGravity(game, frameTime);
+
+
+	//handleGravity(game, frameTime);
 	if (game.activePiece.locking)
 		game.activePiece.lockDelay--;
 	updateGhostPiece(&game);
@@ -187,15 +192,19 @@ bool handleGravity(Game& game, int frameTime) {
 	bool placePiece = false;
 
 	game.level = 1 + game.totalLinesCleared / 1;
-	Tetranimo droppedPiece = movePiece(game.activePiece, PieceDirection::DOWN);
 	//If you collided with something falling due to gravity, you ran out of time so the game should place the piece for you.
-	if (checkCollision(droppedPiece.points, game.board))
-		game.activePiece.locking = true;
 	if (game.framesSinceLastDrop == game.gravity) {
-		if (game.activePiece.locking && game.activePiece.lockDelay <= 0)
+
+		Tetranimo droppedPiece = movePiece(game.activePiece, PieceDirection::DOWN);
+		if (checkCollision(droppedPiece.points, game.board))
+			game.activePiece.locking = true;
+
+		if (game.activePiece.lockDelay <= 0)
 			placeActivePiece(game);
+
 		else if(!game.activePiece.locking)
 			game.activePiece = droppedPiece;
+
 		game.gravity = INITIAL_GRAVITY - game.level;
 		game.framesSinceLastDrop = 0;
 	}

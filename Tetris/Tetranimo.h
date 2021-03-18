@@ -6,12 +6,14 @@
 //Forward declerations
 enum class PieceDirection;
 
+typedef struct Square Board[BOARD_HEIGHT][BOARD_WIDTH];
+
 /* The orientation of a piece relative to it's initial orientation.*/
-typedef enum TetranimoOrientation {
+typedef enum class TetranimoOrientation {
     DEFAULT,
     RIGHT, //Rotated 90 Degrees Right
-    LEFT, //Rotated 90 Degrees Right
-    TWO //Rotated 90 Degrees twice, either derection gices same orientation.
+    TWO, //Rotated 90 Degrees twice, either derection gices same orientation.
+    LEFT, //Rotated 90 Degrees Left
 } tetranimoOrientation;
 
 typedef enum TetranimoType {
@@ -65,6 +67,15 @@ Tetranimo movePiece(Tetranimo piece, PieceDirection direction);
 /* Rotates a piece 90 degrees */
 Tetranimo rotatePiece(Tetranimo piece, bool clockwise);
 
+Tetranimo fixRotation(Tetranimo piece, Board board, bool clockwise);
 
 /* Creates and returns a new tetaneemo */
 Tetranimo spawnTetranimo();
+
+/* Populates SRS Kicks data structure if it's the first time being used */
+void generateSRSKicks();
+
+/* Returns new piece orientation given the current orientation and whether you are rotating clockwise or anticlockwise */
+TetranimoOrientation getNewOrientation(TetranimoOrientation orientation, bool clockwise);
+
+

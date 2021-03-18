@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
 	/* Game Loop */
 	while (game.state != GameState::OVER) {
 
-		/*generateWallKicks();*/
+		
 		
 		//Handle events on queue
 		while (SDL_PollEvent(&event) != 0)
@@ -236,7 +236,7 @@ void holdPiece(Game* game)
 	Tetranimo temp;
 
 	//If there isn't a piece already held
-	if (game->pieceIsHeld)
+	if (!game->pieceIsHeld)
 	{
 		// set the heldPiece to activePiece;
 		game->heldPiece = game->activePiece;
@@ -251,7 +251,7 @@ void holdPiece(Game* game)
 	}
 
 	//If a piece is held already
-	else if (game->pieceIsHeld == true)
+	else
 	{
 		//erase the activePiece
 		erasePiece(&game->activePiece, game->board);
