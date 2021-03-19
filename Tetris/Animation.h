@@ -1,17 +1,27 @@
 #pragma once
 #include "Game.h"
+#include "Gfx.h"
 
-#define ROW_BREAK_LENGTH 3000 / 30 /* I don't know what this number means */
-#define TETRANIMO_LOCK_LENGTH 1000/15
+#define ROW_BREAK_LENGTH 5 /* I don't know what this number means */
+#define SINGLE_ANIM_LENGTH 30
+#define DOUBLE_ANIM_LENGTH 40
+#define TRIPLE_ANIM_LENGTH 50
+#define TETRIS_ANIM_LENGTH 100
 
 enum class AnimationType {
-	ROW_BREAK
+	ROW_BREAK,
+	SINGLE,
+	DOUBLE,
+	TRIPLE,
+	TETRIS
 };
 
 typedef struct Animation {
 	int time;
 	bool playing;
 	AnimationType type;
+	int xPos;
+	int yPos;
 } animation;
 
 
@@ -26,3 +36,5 @@ void animateRowBreak(int rows[]);
 
 /* Returns whether or not a row break is in progress. Used because row breaks should be 'blocking' */
 bool animatingRowBreak();
+
+void animateUpCummies(Animation* animation);

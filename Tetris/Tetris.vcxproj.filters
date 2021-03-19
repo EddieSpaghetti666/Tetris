@@ -144,6 +144,12 @@
     <Image Include="Textures\White_Square.png">
       <Filter>Resource Files\Textures</Filter>
     </Image>
+    <Image Include="Textures\Double.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="Textures\Single.png">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Font Include="fonts\ScoreFont.ttf">

@@ -3,6 +3,7 @@
 #include "TetrisUtils.h"
 #include "Animation.h"
 #include "Sound.h"
+#include "Gfx.h"
 
 bool rowCompleted(Board board, int row) {
 	for (int col = 0; col < BOARD_WIDTH; col++) {
@@ -47,7 +48,7 @@ void placeActivePiece(Game& game)
 {
 	Tetranimo activePiece = game.activePiece;
 	for (int i = 0; i < TETROMINO_POINTS; i++) {
-		if (activePiece.points[i].y == 0 && game.board[activePiece.points[i].x][0].occupyingPiece.type != TetranimoType::EMPTY) {
+ 		if (activePiece.points[i].y <= 0) {
 			game.state = GameState::OVER;
 			return;
 		}
@@ -79,23 +80,31 @@ void handleFullRows(Game& game) {
 		dropRow(game.board, rows[i]);
 	}
 	free(rows);
-	//play sound effect
+	//play sound effect & draw upcummies
+	Gfx::setViewPort(0);
 	switch (i) {
 	case 1: 
 		playSFX(SFX::SINGLE);
+		playAnimation(AnimationType::SINGLE);
 		break;
 	case 2:
 		playSFX(SFX::DOUBLE);
+		playAnimation(AnimationType::DOUBLE);
 		break;
 	case 3:
 		playSFX(SFX::TRIPLE);
+		playAnimation(AnimationType::TRIPLE);
 		break;
 	case 4:
 		playSFX(SFX::TETRIS);
+		playAnimation(AnimationType::TETRIS);
 		break;
 	default:
 		break;
 	}
+
+	//draw upcummies
+
 
 
 }

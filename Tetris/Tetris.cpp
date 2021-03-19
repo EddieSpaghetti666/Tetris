@@ -20,13 +20,14 @@
 
 PlayerAction getAction(SDL_Event);
 void loadMedia();
-void teardown();
+void teardown(Game);
 void drawUI(Game);
 void drawBoard(Game); 
 void drawPiece(Tetranimo piece);
 
 
 //NOT GOOD.
+//TODO: load and free these in GFX!
 Texture boardTile;
 Texture spriteSheet;
 Texture ghostSpriteSheet;
@@ -35,16 +36,21 @@ Texture boardBorder;
 Texture heldBox;
 Texture scoreBox;
 Texture nextPiecesBox;
+Texture highScoreBox;
 Texture levelBox;
 Texture scoreFont;
-
 Texture whiteSquare;
+Texture singleAnim;
+Texture doubleAnim;
+Texture tripleAnim;
+Texture tetrisAnim;
 
 //Also not good.
 UIComponent UI_HeldBox;
 UIComponent UI_ScoreBox;
 UIComponent UI_LevelBox;
 UIComponent UI_NextPiecesBox;
+UIComponent UI_HighScoreBox;
 
 
 int main(int argc, char* argv[]) {
@@ -53,6 +59,7 @@ int main(int argc, char* argv[]) {
 	srand((unsigned)time(NULL));
 
 	Game game = initialize();
+	printf("%d", game.highScore);
 	PlayerAction playerAction = PlayerAction::IDLE;
 
 	struct timeb frameStart, frameEnd;
@@ -130,7 +137,7 @@ int main(int argc, char* argv[]) {
 	/*End of Game loop*/
 
 	//TODO: I'm leaking a lot memory right now by not freeing textures NOT GOOD.
-	teardown();
+	teardown(game);
 
 	return 0;
 
@@ -194,20 +201,31 @@ void loadMedia() {
 	heldBox = Gfx::loadTextureFromFile("Textures\\Hold.png");
 	scoreBox = Gfx::loadTextureFromFile("Textures\\Score.png");
 	nextPiecesBox = Gfx::loadTextureFromFile("Textures\\NextSmall.png");
+	highScoreBox = Gfx::loadTextureFromFile("Textures\\Highscore.png");
 	levelBox = Gfx::loadTextureFromFile("Textures\\Level.png");
+	singleAnim = Gfx::loadTextureFromFile("Textures\\Single.png");
+	doubleAnim = Gfx::loadTextureFromFile("Textures\\Double.png");
+	tripleAnim = Gfx::loadTextureFromFile("Textures\\Triple.png");
+	tetrisAnim = Gfx::loadTextureFromFile("Textures\\Tetris.png");
 
 	//Initialize the UI_Compenents with their textures and positions
 	UI_HeldBox = { heldBox , scoreHoldViewPort.w - 100, CENTER(scoreHoldViewPort.h,BOARD_PIXEL_HEIGHT) , heldBox.w, heldBox.h };
 	UI_ScoreBox = { scoreBox , UI_HeldBox.x, UI_HeldBox.y + heldBox.h + 5, scoreBox.w, scoreBox.h };
 	UI_NextPiecesBox = { nextPiecesBox , 5, CENTER(SCREEN_HEIGHT , BOARD_PIXEL_HEIGHT) + 24, nextPiecesBox.w, nextPiecesBox.h };
 	UI_LevelBox = { levelBox , UI_HeldBox.x, UI_ScoreBox.y + scoreBox.h + 5, levelBox.w, levelBox.h };
+	UI_HighScoreBox = { highScoreBox , UI_NextPiecesBox.x, UI_NextPiecesBox.y + nextPiecesBox.h + 5, highScoreBox.w, highScoreBox.h };
 
 	whiteSquare = Gfx::loadTextureFromFile("Textures\\White_Square.png");
 }
 
 
 
-void teardown() {
+void teardown(Game game) {
+
+	//Save the highscore.
+	if (game.score > game.highScore)
+		saveScore(game.score);
+
 	//Get rid of the font.
 	TTF_CloseFont(gFont);
 	gFont = NULL;
@@ -279,11 +297,11 @@ void holdPiece(Game* game)
 void drawUI(Game game) {
 
 	//Render Background
-	Gfx::setViewPort(gRenderer, 0);
+	Gfx::setViewPort(0);
 	Gfx::render(0, 0, background, 0, 0.5);
 
 	//Render Hold Piece Box
-	Gfx::setViewPort(gRenderer, &scoreHoldViewPort);
+	Gfx::setViewPort(&scoreHoldViewPort);
 	Gfx::render(UI_HeldBox.x, UI_HeldBox.y, UI_HeldBox.texture); //IDK WTF THIS IS ANY MORE IM JUST TYPING RANDOM NUMBERS!!
 
 	//Render the held piece if there is one
@@ -332,9 +350,8 @@ void drawUI(Game game) {
 		scoreFont);
 
 
-
 	//Render Next Pieces box
-	Gfx::setViewPort(gRenderer, &nextPiecesViewPort);
+	Gfx::setViewPort(&nextPiecesViewPort);
 	Gfx::render(UI_NextPiecesBox.x, UI_NextPiecesBox.y, UI_NextPiecesBox.texture); // +24 is because I feel like it looks better further down. IDK why.
 
 	//Render Next Pieces
@@ -354,12 +371,25 @@ void drawUI(Game game) {
 		&fullPieceClips[type]);
 	Gfx::setAlpha(spriteSheet, 1.0);
 
+	//Render HighScore Box
+	Gfx::render(UI_HighScoreBox.x, UI_HighScoreBox.y, UI_HighScoreBox.texture);
+
+	//Render the level as Text
+	char highScoreTextBuffer[1000];
+	sprintf_s(highScoreTextBuffer, "%d", game.highScore);
+	scoreFont = Gfx::loadFromRenderedText(highScoreTextBuffer, textColor, true);
+
+	//GOOD FUCKING LORD THIS IS A MESS RIGHT NOW
+	Gfx::render(UI_HighScoreBox.x + (highScoreBox.w / 2) - (scoreFont.w / 2), //Center text Horizontally in box
+		UI_HighScoreBox.y + (UI_HighScoreBox.h / 2), //Center text Vertically in box
+		scoreFont);
+
 }
 
 /* drawBoard: Renders the appropraite textures to the SDL Window based on the current state of the board */
 void drawBoard(Game game)
 {
-	Gfx::setViewPort(gRenderer, &boardViewPort);
+	Gfx::setViewPort(&boardViewPort);
 
 	Gfx::render(0, 0, boardBorder, 0);
 
@@ -393,7 +423,7 @@ void drawBoard(Game game)
 }
 
 void drawPiece(Tetranimo piece) {
-	Gfx::setViewPort(gRenderer, &boardViewPort);
+	Gfx::setViewPort(&boardViewPort);
 	for (int i = 0; i < TETROMINO_POINTS; i++) {
 		Point point = piece.points[i];
 		if (piece.state == TetranimoState::ACTIVE) {
@@ -407,5 +437,6 @@ void drawPiece(Tetranimo piece) {
 	}
 
 }
+
 
 

@@ -24,6 +24,7 @@ Game initialize() {
 	game.activePiece.state = TetranimoState::ACTIVE;
 	game.pieceIsActive = true;
 	game.ghostPiece = game.activePiece;
+	game.highScore = loadScore();
 
 	//This line is so that the held piece appears correctly as None instead of Line
 	game.heldPiece.type = TetranimoType::EMPTY;
@@ -231,3 +232,28 @@ Tetranimo forcePieceDown(Tetranimo piece, Board board)
 	return droppedPiece;
 }
 
+int loadScore() {
+	// Save the score to file
+	FILE* fscore;
+	errno_t error = fopen_s(&fscore, "highscore.txt", "r");
+	if (error != 0) {
+		printf("Couldn't open highscore.txt!");
+		return 0;
+	}
+	int score = 0;
+	fscanf_s(fscore, "%d", &score);
+	fclose(fscore);
+	return score;
+}
+
+void saveScore(int score) {
+	// Save the score to file
+	FILE* fscore;
+	errno_t error = fopen_s(&fscore, "highscore.txt", "w+");
+	if (fscore == NULL) {
+		printf("Couldn't open highscore.txt!");
+		return;
+	}
+	fprintf(fscore, "%d", score);
+	fclose(fscore);
+}

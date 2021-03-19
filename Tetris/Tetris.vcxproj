@@ -74,13 +74,13 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Users\David\vclib\SDL2_mixer-2.0.4\include;C:\Users\David\vclib\SDL2_ttf-2.0.15\include;C:\Users\David\vclib\SDL2_image-2.0.5\include;C:\Users\David\vclib\SDL2-2.0.14\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\David\vclib\SDL2_mixer-2.0.4\lib\x86;C:\Users\David\vclib\SDL2_ttf-2.0.15\lib\x86;C:\Users\David\vclib\SDL2_image-2.0.5\lib\x86;C:\Users\David\vclib\SDL2-2.0.14\lib\x86;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Tetris</OutDir>
+    <OutDir>$(SolutionDir)Tetris\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\Users\David\vclib\SDL2_mixer-2.0.4\include;C:\Users\David\vclib\SDL2_ttf-2.0.15\include;C:\Users\David\vclib\SDL2_image-2.0.5\include;C:\Users\David\vclib\SDL2-2.0.14\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\David\vclib\SDL2_mixer-2.0.4\lib\x86;C:\Users\David\vclib\SDL2_ttf-2.0.15\lib\x86;C:\Users\David\vclib\SDL2_image-2.0.5\lib\x86;C:\Users\David\vclib\SDL2-2.0.14\lib\x86;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Tetris</OutDir>
+    <OutDir>$(SolutionDir)Tetris\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -96,7 +96,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -111,7 +111,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -181,12 +181,14 @@
     <Image Include="Textures\BGBorder.png" />
     <Image Include="Textures\BoardTile2.png" />
     <Image Include="Textures\Board_Tile.png" />
+    <Image Include="Textures\Double.png" />
     <Image Include="Textures\Ghost_Sprites.png" />
     <Image Include="Textures\Hold.png" />
     <Image Include="Textures\Level.png" />
     <Image Include="Textures\next.png" />
     <Image Include="Textures\NextSmall.png" />
     <Image Include="Textures\Score.png" />
+    <Image Include="Textures\Single.png" />
     <Image Include="Textures\Tetris_BG.jpg" />
     <Image Include="Textures\Tetris_Sprites.png" />
     <Image Include="Textures\White_Square.png" />

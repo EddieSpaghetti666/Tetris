@@ -163,8 +163,8 @@ void Gfx::render(int x, int y, Texture texture, const SDL_Rect* clip, double sca
 }
 
 
-void Gfx::setViewPort(SDL_Renderer* renderer, const SDL_Rect* viewPort) {
-	if (SDL_RenderSetViewport(renderer, viewPort) != 0) {
+void Gfx::setViewPort(const SDL_Rect* viewPort) {
+	if (SDL_RenderSetViewport(gRenderer, viewPort) != 0) {
 		printf("Error setting View Port %s\n", SDL_GetError());
 	}
 }

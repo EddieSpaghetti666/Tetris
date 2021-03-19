@@ -22,6 +22,11 @@ extern Texture scoreBox;
 extern Texture nextPiecesBox;
 extern Texture levelBox;
 extern Texture scoreFont;
+extern Texture singleAnim;
+extern Texture doubleAnim;
+extern Texture tripleAnim;
+extern Texture tetrisAnim;
+
 
 extern Texture whiteSquare;
 
@@ -43,6 +48,8 @@ const int BOARD_PIXEL_HEIGHT = BOARD_HEIGHT * SQUARE_PIXEL_SIZE + BORDER_PADDING
 const SDL_Rect boardViewPort = { CENTER(SCREEN_WIDTH, BOARD_PIXEL_WIDTH) , CENTER(SCREEN_HEIGHT, BOARD_PIXEL_HEIGHT), BOARD_PIXEL_WIDTH, BOARD_PIXEL_HEIGHT }; //This centers the board.
 const SDL_Rect scoreHoldViewPort = { 0, 0, (CENTER(SCREEN_WIDTH , BOARD_PIXEL_WIDTH)), SCREEN_HEIGHT };
 const SDL_Rect nextPiecesViewPort = { (CENTER(SCREEN_WIDTH , BOARD_PIXEL_WIDTH)) + BOARD_PIXEL_WIDTH, 0, scoreHoldViewPort.w + boardViewPort.w, SCREEN_HEIGHT };
+
+
 
 //These are the positions of the full piece images on the sprite sheet.
 const SDL_Rect fullPieceClips[7] = { {1, 249, 64, 16}, //Line
@@ -85,7 +92,7 @@ namespace Gfx{
 	void render(int x, int y, Texture texture, const SDL_Rect* clip = 0, double scale = 0);
 
 
-	void setViewPort(SDL_Renderer* renderer, const SDL_Rect* viewPort);
+	void setViewPort(const SDL_Rect* viewPort);
 
 	void setAlpha(Texture& texture, double alpha);
 

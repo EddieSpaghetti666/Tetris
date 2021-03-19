@@ -19,6 +19,7 @@ typedef Square Board[BOARD_HEIGHT][BOARD_WIDTH];
 
 //TODO: MOVE THIS!!!!!!
 typedef struct Game {
+	int highScore;
 	GameState state;
 	bool pieceIsActive;
 	bool drawGhostPiece;
@@ -57,6 +58,10 @@ bool handleGravity(Game& game, int frameTime);
 
 /* Moves a piece as far down to bottom of the board as possible. Used for positioning the ghost pieces right now too!*/
 Tetranimo forcePieceDown(Tetranimo piece, Board board);
+
+int loadScore();
+
+void saveScore(int score);
 
 
 
