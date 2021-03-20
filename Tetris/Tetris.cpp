@@ -287,6 +287,8 @@ void holdPiece(Game* game)
 		//game->activePiece.points = SHAPES[game->activePiece.shape];
 
 		memcpy(game->activePiece.points, STARTING_COORDS[game->activePiece.type], sizeof(game->activePiece.points));
+		game->activePiece.pivot = game->activePiece.points[PIVOT_INDECES.find(game->activePiece.type)->second];
+		game->activePiece.orientation = TetranimoOrientation::DEFAULT;
 
 		updatePieceBoardPosition(game->activePiece, game->board);
 

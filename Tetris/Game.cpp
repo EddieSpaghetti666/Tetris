@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Sound.h"
 #include "Animation.h"
-
+#include "Tetranimo.h"
 //Forward declare functions because code is spaghetti and meatballs
 void placeActivePiece(Game& game);
 bool checkCollision(Point points[], Board board);

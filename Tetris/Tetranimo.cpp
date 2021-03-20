@@ -16,8 +16,7 @@ std::map<TetranimoType, std::map<Rotation, std::vector<Kick>>> SRSKicks;
   the 'Z' piece's pivot is it's 3rd point of it's default orientation.
   consult this chart to see wtf I'm talking about, this explanation sucked : https://tetris.wiki/images/thumb/1/17/SRS-true-rotations.png/300px-SRS-true-rotations.png */
 
-//Note these are indexes into the points array that the piece has so we start counting at 0.
-const std::map<TetranimoType, int> PIVOT_INDECES = { {TetranimoType::SQUARE, 2}, {TetranimoType::LINE, 2}, {TetranimoType::J, 2}, {TetranimoType::L, 1}, {TetranimoType::S, 1}, {TetranimoType::T, 1}, {TetranimoType::Z, 2} };
+
 
 
 /* Compares position of piece to see if it moved */

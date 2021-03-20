@@ -1,5 +1,6 @@
 #pragma once
 #include "TetrisUtils.h"
+#include <map>
 
 #define LOCK_DELAY 30
 
@@ -61,6 +62,9 @@ const StartingPos STARTING_COORDS[7] = {
 //SRS stuff
 typedef std::pair<int, int> Kick;
 typedef std::pair<TetranimoOrientation, TetranimoOrientation> Rotation;
+
+//Note these are indexes into the points array that the piece has so we start counting at 0.
+const std::map<TetranimoType, int> PIVOT_INDECES = { {TetranimoType::SQUARE, 2}, {TetranimoType::LINE, 2}, {TetranimoType::J, 2}, {TetranimoType::L, 1}, {TetranimoType::S, 1}, {TetranimoType::T, 1}, {TetranimoType::Z, 2} };
 
 /* Compares position of piece to see if it moved */
 bool moved(Tetranimo originalPos, Tetranimo newPos);
